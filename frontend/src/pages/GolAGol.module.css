@@ -54,6 +54,13 @@
 .scoreTeam:first-child { text-align: right; }
 .scoreTeam:last-child { text-align: left; }
 
+.scoreCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
 .scoreNumbers {
   font-size: 2.5rem;
   font-weight: 900;
@@ -62,6 +69,26 @@
   padding: 4px 16px;
   border-radius: 8px;
   letter-spacing: 2px;
+}
+
+.timerDisplay {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #c9d1d9;
+  font-family: monospace;
+  background: rgba(0,0,0,0.6);
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timerExtra {
+  color: #ff7b72;
+  font-size: 0.9rem;
+  font-weight: 900;
 }
 
 .estadoIndicator {
@@ -198,25 +225,90 @@
   border-radius: 4px;
 }
 
-.acciones {
+.teamActionsBtnGroup {
   display: flex;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 16px;
+  padding: 8px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
 }
 
-.btnAction {
-  background: rgba(0,0,0,0.4);
-  border: 1px solid rgba(255,255,255,0.15);
+.btnTeamAction {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
+  color: white;
   cursor: pointer;
-  padding: 6px;
-  font-size: 1.1rem;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
   transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
-.btnAction:hover:not(:disabled) { background: rgba(255,255,255,0.2); }
-.btnAction:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(100%); }
+.btnTeamAction:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.actionFormBox {
+  background: rgba(63, 185, 80, 0.1);
+  border: 1px solid rgba(63, 185, 80, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.actionFormHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.actionFormHeader h4 {
+  margin: 0;
+  color: #3fb950;
+  font-size: 1rem;
+}
+
+.actionFormBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btnConfirmAction {
+  background: #238636;
+  color: white;
+  border: 1px solid rgba(240, 246, 252, 0.1);
+  padding: 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btnConfirmAction:hover:not(:disabled) {
+  background: #2ea043;
+}
+.btnConfirmAction:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnRemoveTiny {
+  background: transparent;
+  color: rgba(248, 81, 73, 0.6);
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0 4px;
+}
+.btnRemoveTiny:hover:not(:disabled) {
+  color: #f85149;
+}
+.btnRemoveTiny:disabled {
+  opacity: 0;
+}
 
 .btnRemove {
   background: rgba(248, 81, 73, 0.15);

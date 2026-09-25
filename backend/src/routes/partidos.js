@@ -193,14 +193,14 @@ router.post('/:id/evento', authMiddleware, adminOReportero, (req, res) => {
   }
 
   // Si es un gol, actualizar el marcador en tiempo real
-  if (tipo === 'GOL' || tipo === 'AUTOGOL') {
+  if (['GOL', 'AUTOGOL', 'GOL_PENAL'].includes(tipo)) {
     const partido = db.prepare('SELECT * FROM partidos WHERE id = ?').get(partido_id);
 
     if (partido) {
       let nuevoLocal = partido.goles_local || 0;
       let nuevoVisita = partido.goles_visita || 0;
 
-      if (tipo === 'GOL') {
+      if (tipo === 'GOL' || tipo === 'GOL_PENAL') {
         if (equipo_id == partido.equipo_local_id) nuevoLocal++;
         else nuevoVisita++;
       } else {
@@ -260,13 +260,13 @@ router.delete('/:id/evento/:evento_id', authMiddleware, adminOReportero, (req, r
   if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
 
   // Si fue un gol o autogol, restar del marcador
-  if (evento.tipo === 'GOL' || evento.tipo === 'AUTOGOL') {
+  if (['GOL', 'AUTOGOL', 'GOL_PENAL'].includes(evento.tipo)) {
     const partido = db.prepare('SELECT * FROM partidos WHERE id = ?').get(partido_id);
     if (partido) {
       let nuevoLocal = partido.goles_local || 0;
       let nuevoVisita = partido.goles_visita || 0;
       
-      if (evento.tipo === 'GOL') {
+      if (evento.tipo === 'GOL' || evento.tipo === 'GOL_PENAL') {
         if (evento.equipo_id == partido.equipo_local_id) nuevoLocal = Math.max(0, nuevoLocal - 1);
         else nuevoVisita = Math.max(0, nuevoVisita - 1);
       } else {

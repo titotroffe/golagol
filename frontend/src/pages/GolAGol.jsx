@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { partidosApi, equiposApi } from '../api';
@@ -11,12 +11,13 @@ function EquipoPanel({
   plantel, 
   agregarAlineacionMut, 
   eliminarAlineacionMut,
-  registrarEventoMut 
+  registrarEventoMut
 }) {
   const equipoId = esLocal ? partido.equipo_local_id : partido.equipo_visita_id;
   const nombre = esLocal ? partido.local_nombre : partido.visita_nombre;
   
-  const [cambiandoId, setCambiandoId] = useState(null);
+  const [pendingAction, setPendingAction] = useState(null);
+  const [actionForm, setActionForm] = useState({});
 
   // Filtrar alineaciones de este equipo
   const miAlineacion = alineaciones.filter(a => a.equipo_id === equipoId);
@@ -98,24 +99,120 @@ function EquipoPanel({
     });
   };
 
-  const confirmarCambio = (saleId, e) => {
-    const entraId = parseInt(e.target.value, 10);
-    if (!entraId) {
-      setCambiandoId(null);
-      return;
+  const executeAction = (penalOverride = null) => {
+    if (!actionForm.jugadorId) return;
+
+    if (pendingAction === 'CAMBIO') {
+      const entraId = parseInt(actionForm.entraId, 10);
+      if (!entraId) return;
+      const entraSuplente = suplentes.find(s => s.jugador_id === entraId);
+      handleAction(actionForm.jugadorId, 'CAMBIO', { 
+        entra_id: entraId, 
+        entra_nombre: entraSuplente ? `${entraSuplente.nombre} ${entraSuplente.apellido}` : 'Jugador' 
+      });
+    } else if (pendingAction === 'PATEAR_PENAL') {
+      const res = penalOverride || actionForm.resultado; // 1, 2, 3
+      if (res === '1') handleAction(actionForm.jugadorId, 'GOL_PENAL');
+      else if (res === '2') handleAction(actionForm.jugadorId, 'PENAL_ERRADO');
+      else if (res === '3') handleAction(actionForm.jugadorId, 'PENAL_ATAJADO');
+    } else {
+      // GOL, AMARILLA, ROJA
+      handleAction(actionForm.jugadorId, pendingAction);
     }
-    const entraSuplente = suplentes.find(s => s.jugador_id === entraId);
     
-    handleAction(saleId, 'CAMBIO', { 
-      entra_id: entraId, 
-      entra_nombre: entraSuplente ? `${entraSuplente.nombre} ${entraSuplente.apellido}` : 'Jugador' 
-    });
-    setCambiandoId(null);
+    setPendingAction(null);
+    setActionForm({});
+  };
+
+  // Jugadores en cancha habilitados para acciones comunes
+  const jugadoresEnCancha = miAlineacion.filter(a => {
+    const est = estadoJugador(a.jugador_id, a.tipo === 'suplente');
+    return !est.inhabilitado;
+  });
+
+  const renderActionForm = () => {
+    if (!pendingAction) return null;
+
+    return (
+      <div className={styles.actionFormBox}>
+        <div className={styles.actionFormHeader}>
+          <h4>
+            {pendingAction === 'GOL' && '⚽ Registrar Gol'}
+            {pendingAction === 'AMARILLA' && '🟨 Sacar Amarilla'}
+            {pendingAction === 'ROJA' && '🟥 Sacar Roja'}
+            {pendingAction === 'CAMBIO' && '🔄 Registrar Cambio'}
+            {pendingAction === 'PATEAR_PENAL' && '🎯 Ejecutar Penal'}
+          </h4>
+          <button onClick={() => setPendingAction(null)} className={styles.btnRemove}>✖</button>
+        </div>
+        
+        <div className={styles.actionFormBody}>
+          <select 
+            value={actionForm.jugadorId || ''} 
+            onChange={e => setActionForm({...actionForm, jugadorId: parseInt(e.target.value)})}
+            className={styles.selectJ}
+          >
+            <option value="">-- Seleccionar Jugador --</option>
+            {jugadoresEnCancha.map(j => (
+              <option key={j.id} value={j.jugador_id}>{j.dorsal} - {j.apellido || j.nombre}</option>
+            ))}
+          </select>
+
+          {pendingAction === 'CAMBIO' && (
+            <select 
+              value={actionForm.entraId || ''} 
+              onChange={e => setActionForm({...actionForm, entraId: parseInt(e.target.value)})}
+              className={styles.selectJ}
+            >
+              <option value="">-- Entra suplente --</option>
+              {suplentes.filter(s => {
+                const est = estadoJugador(s.jugador_id, true);
+                return !est.haEntrado && !est.expulsado;
+              }).map(s => (
+                <option key={s.id} value={s.jugador_id}>{s.dorsal} - {s.apellido || s.nombre}</option>
+              ))}
+            </select>
+          )}
+
+          {pendingAction === 'PATEAR_PENAL' ? (
+            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+              <button onClick={() => executeAction('1')} className={styles.btnConfirmAction} disabled={!actionForm.jugadorId} style={{flex: 1}}>⚽ GOL</button>
+              <button onClick={() => executeAction('2')} className={styles.btnConfirmAction} disabled={!actionForm.jugadorId} style={{flex: 1, backgroundColor: '#da3633'}}>❌ ERRADO</button>
+              <button onClick={() => executeAction('3')} className={styles.btnConfirmAction} disabled={!actionForm.jugadorId} style={{flex: 1, backgroundColor: '#bf8700'}}>🧤 ATAJADO</button>
+            </div>
+          ) : (
+            <button 
+              onClick={() => executeAction()} 
+              className={styles.btnConfirmAction}
+              disabled={
+                !actionForm.jugadorId || 
+                (pendingAction === 'CAMBIO' && !actionForm.entraId)
+              }
+            >
+              Confirmar
+            </button>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
     <div className={styles.equipoCol}>
       <h2 className={styles.eqTitle}>{nombre}</h2>
+
+      <div className={styles.teamActionsBtnGroup}>
+        <button onClick={()=>setPendingAction('GOL')} className={styles.btnTeamAction}>⚽ Gol</button>
+        <button onClick={() => {
+          registrarEventoMut.mutate({tipo: 'PENAL_A_FAVOR', equipo_id: equipoId, detalle: esLocal ? 'Local' : 'Visita', minuto: 0});
+          setPendingAction('PATEAR_PENAL');
+        }} className={styles.btnTeamAction}>🎯 Penal</button>
+        <button onClick={()=>setPendingAction('AMARILLA')} className={styles.btnTeamAction}>🟨 Amarilla</button>
+        <button onClick={()=>setPendingAction('ROJA')} className={styles.btnTeamAction}>🟥 Roja</button>
+        <button onClick={()=>setPendingAction('CAMBIO')} className={styles.btnTeamAction}>🔄 Cambio</button>
+      </div>
+
+      {renderActionForm()}
 
       <div className={styles.section}>
         <div className={styles.secHeader}>
@@ -142,27 +239,7 @@ function EquipoPanel({
                   {expulsado && <span className={styles.tagRoja}>🟥</span>}
                   {haSalido && <span className={styles.tagSub}>⬇️ Salió</span>}
                 </div>
-
-                {cambiandoId === t.jugador_id ? (
-                  <div className={styles.cambioSelector}>
-                    <select onChange={(e) => confirmarCambio(t.jugador_id, e)} autoFocus>
-                      <option value="">Seleccionar suplente que entra...</option>
-                      {suplentesDisponiblesParaEntrar.map(s => (
-                        <option key={s.id} value={s.jugador_id}>{s.apellido ? `${s.nombre} ${s.apellido}` : s.nombre}</option>
-                      ))}
-                    </select>
-                    <button onClick={() => setCambiandoId(null)} className={styles.btnRemove}>Cancelar</button>
-                  </div>
-                ) : (
-                  <div className={styles.acciones}>
-                    <button title="Gol" onClick={() => handleAction(t.jugador_id, 'GOL')} className={styles.btnAction} disabled={inhabilitado}>⚽</button>
-                    <button title="Penal" onClick={() => handleAction(t.jugador_id, 'PENAL')} className={styles.btnAction} disabled={inhabilitado}>🎯</button>
-                    <button title="Amarilla" onClick={() => handleAction(t.jugador_id, 'AMARILLA')} className={styles.btnAction} disabled={inhabilitado}>🟨</button>
-                    <button title="Roja" onClick={() => handleAction(t.jugador_id, 'ROJA')} className={styles.btnAction} disabled={inhabilitado}>🟥</button>
-                    <button title="Cambio (Sale)" onClick={() => setCambiandoId(t.jugador_id)} className={styles.btnAction} disabled={inhabilitado}>🔄</button>
-                    <button title="Quitar de planilla" onClick={() => eliminarAlineacionMut.mutate(t.jugador_id)} className={styles.btnRemove} disabled={haSalido}>×</button>
-                  </div>
-                )}
+                <button title="Quitar de planilla" onClick={() => eliminarAlineacionMut.mutate(t.jugador_id)} className={styles.btnRemoveTiny} disabled={haSalido}>✖</button>
               </li>
             );
           })}
@@ -197,14 +274,7 @@ function EquipoPanel({
                   {expulsado && <span className={styles.tagRoja}>🟥</span>}
                   {haEntrado && <span className={styles.tagSub}>⬆️ Jugando</span>}
                 </div>
-                <div className={styles.acciones}>
-                  {/* Los suplentes solo pueden accionar si entraron a la cancha */}
-                  <button title="Gol" onClick={() => handleAction(s.jugador_id, 'GOL')} className={styles.btnAction} disabled={inhabilitado}>⚽</button>
-                  <button title="Penal" onClick={() => handleAction(s.jugador_id, 'PENAL')} className={styles.btnAction} disabled={inhabilitado}>🎯</button>
-                  <button title="Amarilla" onClick={() => handleAction(s.jugador_id, 'AMARILLA')} className={styles.btnAction} disabled={inhabilitado}>🟨</button>
-                  <button title="Roja" onClick={() => handleAction(s.jugador_id, 'ROJA')} className={styles.btnAction} disabled={inhabilitado}>🟥</button>
-                  <button title="Quitar de planilla" onClick={() => eliminarAlineacionMut.mutate(s.jugador_id)} className={styles.btnRemove} disabled={haEntrado}>×</button>
-                </div>
+                <button title="Quitar de planilla" onClick={() => eliminarAlineacionMut.mutate(s.jugador_id)} className={styles.btnRemoveTiny} disabled={haEntrado}>✖</button>
               </li>
             );
           })}
@@ -273,6 +343,50 @@ export default function GolAGol() {
     onSuccess: () => queryClient.invalidateQueries(['partido', id])
   });
 
+  const [tiempoState, setTiempoState] = useState({ mins: 0, secs: 0, extra: null });
+
+  useEffect(() => {
+    if (!partido || !partido.eventos) return;
+
+    const interval = setInterval(() => {
+      const evs = partido.eventos;
+      const inicio1T = evs.find(e => e.tipo === 'INICIO_PARTIDO');
+      const fin1T = evs.find(e => e.tipo === 'FIN_1T');
+      const inicio2T = evs.find(e => e.tipo === 'INICIO_2T');
+      const finPartido = evs.find(e => e.tipo === 'FIN_PARTIDO');
+      const extraTime = evs.filter(e => e.tipo === 'TIEMPO_EXTRA').pop(); // el último
+
+      let totalSecs = 0;
+      let running = false;
+      const now = Date.now();
+
+      if (inicio1T && !fin1T) {
+        const t1 = new Date(inicio1T.registrado_en + 'Z').getTime();
+        totalSecs = Math.floor((now - t1) / 1000);
+        running = true;
+      } else if (fin1T && !inicio2T) {
+        totalSecs = 45 * 60; // Pausado en 45:00
+      } else if (inicio2T && !finPartido) {
+        const t2 = new Date(inicio2T.registrado_en + 'Z').getTime();
+        totalSecs = (45 * 60) + Math.floor((now - t2) / 1000);
+        running = true;
+      } else if (finPartido) {
+        totalSecs = 90 * 60; // Clavado en 90:00
+      }
+
+      setTiempoState({
+        mins: Math.floor(totalSecs / 60),
+        secs: totalSecs % 60,
+        extra: extraTime ? extraTime.detalle : null
+      });
+
+      if (!running && (finPartido || (!inicio1T && !inicio2T))) clearInterval(interval);
+
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [partido]);
+
   if (loadP || loadA) return <p className={styles.msg}>Cargando entorno en vivo...</p>;
   if (!partido) return <p className={styles.msg}>Partido no encontrado.</p>;
 
@@ -284,8 +398,14 @@ export default function GolAGol() {
         <Link to="/admin" className={styles.btnBack}>← Volver</Link>
         <div className={styles.scoreBoard}>
           <div className={styles.scoreTeam}>{partido.local_nombre}</div>
-          <div className={styles.scoreNumbers}>
-            {partido.goles_local || 0} - {partido.goles_visita || 0}
+          <div className={styles.scoreCenter}>
+            <div className={styles.scoreNumbers}>
+              {partido.goles_local || 0} - {partido.goles_visita || 0}
+            </div>
+            <div className={styles.timerDisplay}>
+              {String(tiempoState.mins).padStart(2, '0')}:{String(tiempoState.secs).padStart(2, '0')}
+              {tiempoState.extra && <span className={styles.timerExtra}> +{tiempoState.extra}'</span>}
+            </div>
           </div>
           <div className={styles.scoreTeam}>{partido.visita_nombre}</div>
         </div>
@@ -308,10 +428,14 @@ export default function GolAGol() {
         {/* PANEL CENTRAL: EVENTOS RECIENTES Y CONTROLES DE PARTIDO */}
         <div className={styles.feedCol}>
           <div className={styles.matchControls}>
-            <button onClick={() => handleMatchState('INICIO_PARTIDO')} className={styles.btnMatchState}>⏱ Inicio 1T</button>
-            <button onClick={() => handleMatchState('FIN_1T')} className={styles.btnMatchState}>🛑 Fin 1T</button>
-            <button onClick={() => handleMatchState('INICIO_2T')} className={styles.btnMatchState}>⏱ Inicio 2T</button>
-            <button onClick={() => handleMatchState('FIN_PARTIDO')} className={styles.btnMatchState}>🏁 Fin Partido</button>
+            <button onClick={() => regEvento.mutate({tipo: 'INICIO_PARTIDO', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>⏱ Inicio 1T</button>
+            <button onClick={() => regEvento.mutate({tipo: 'FIN_1T', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>🛑 Fin 1T</button>
+            <button onClick={() => regEvento.mutate({tipo: 'INICIO_2T', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>⏱ Inicio 2T</button>
+            <button onClick={() => regEvento.mutate({tipo: 'FIN_PARTIDO', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>🏁 Fin</button>
+            <button onClick={() => {
+              const min = prompt("¿Cuántos minutos agrega el árbitro?");
+              if (min) regEvento.mutate({tipo: 'TIEMPO_EXTRA', equipo_id: null, detalle: min});
+            }} className={styles.btnMatchState}>➕ Adición</button>
           </div>
           <h3 className={styles.feedTitle}>Eventos Registrados</h3>
           <div className={styles.feedScroll}>
@@ -328,16 +452,24 @@ export default function GolAGol() {
                 <div key={ev.id} className={styles.evCard}>
                   <div className={styles.evCardMain}>
                     <span className={styles.evIcon}>
-                      {ev.tipo === 'GOL' ? '⚽' : 
-                       ev.tipo === 'PENAL' ? '🎯' : 
+                      {ev.tipo === 'GOL' || ev.tipo === 'GOL_PENAL' ? '⚽' : 
+                       ev.tipo === 'PENAL_A_FAVOR' ? '🎯' : 
+                       ev.tipo === 'PENAL_ERRADO' ? '❌' : 
+                       ev.tipo === 'PENAL_ATAJADO' ? '🧤' : 
                        ev.tipo === 'AMARILLA' ? '🟨' : 
                        ev.tipo === 'ROJA' ? '🟥' : 
                        ev.tipo === 'CAMBIO' ? '🔄' : 
+                       ev.tipo === 'TIEMPO_EXTRA' ? '➕' :
                        ev.tipo.startsWith('INICIO') || ev.tipo.startsWith('FIN') ? '⏱' : '▪️'}
                     </span>
                     <div className={styles.evDetails}>
                       <strong>
                         {ev.tipo === 'CAMBIO' ? `Salió ${ev.jugador_apellido || ev.jugador_nombre}` : 
+                         ev.tipo === 'TIEMPO_EXTRA' ? `Adición: +${ev.detalle} min` :
+                         ev.tipo === 'PENAL_A_FAVOR' ? `Penal para ${ev.equipo_nombre}` :
+                         ev.tipo === 'PENAL_ERRADO' ? `${ev.jugador_apellido || ev.jugador_nombre} (Erró Penal)` :
+                         ev.tipo === 'PENAL_ATAJADO' ? `${ev.jugador_apellido || ev.jugador_nombre} (Penal Atajado)` :
+                         ev.tipo === 'GOL_PENAL' ? `${ev.jugador_apellido || ev.jugador_nombre} (Gol de Penal)` :
                          ev.tipo.startsWith('INICIO') || ev.tipo.startsWith('FIN') ? ev.tipo.replace('_', ' ') :
                          (ev.jugador_apellido || ev.jugador_nombre)}
                       </strong>
