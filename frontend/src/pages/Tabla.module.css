@@ -1,0 +1,214 @@
+/* ─────────────────────────────
+   CONTENEDOR
+───────────────────────────── */
+.wrap { display: flex; flex-direction: column; gap: 12px; }
+
+/* ─────────────────────────────
+   ENCABEZADO DE SECCIÓN
+───────────────────────────── */
+.secHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #238636;
+}
+
+.secTitle {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #f0f6fc;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.secSub {
+  font-size: 0.7rem;
+  color: #6e7681;
+}
+
+/* ─────────────────────────────
+   TABLA
+───────────────────────────── */
+.tableOuter {
+  width: 100%;
+  background: #161b22;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.87rem;
+  /* Tabla debe caber en el contenedor — sin scroll horizontal */
+  table-layout: fixed;
+}
+
+/* Encabezados */
+.table thead tr { background: #0d1117; }
+
+.table th {
+  padding: 8px 6px;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #6e7681;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Filas */
+.row {
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: background 0.1s;
+}
+
+.row:last-child { border-bottom: none; }
+.row:hover      { background: rgba(255,255,255,0.03); }
+
+/* Zona de play-offs: borde izquierdo verde */
+.rowPlayoff {
+  box-shadow: inset 3px 0 0 rgba(35, 134, 54, 0.55);
+}
+
+/* Último clasificado: línea divisoria abajo más visible */
+.rowPlayoffLast {
+  border-bottom: 2px solid rgba(35, 134, 54, 0.45) !important;
+}
+
+.table td {
+  padding: 9px 6px;
+  text-align: center;
+  color: #e6edf3;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─────────────────────────────
+   COLUMNAS — anchos fijos
+   La clave del responsive correcto
+───────────────────────────── */
+.thPos   { width: 28px; text-align: center; }
+.thEquipo { text-align: left !important; }
+.thNum   { width: 34px; text-align: center; font-size: 0.7rem; }
+.thPts   { width: 42px; color: #d29922 !important; text-align: center; font-size: 0.75rem; }
+
+.tdPos {
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #6e7681;
+  text-align: center;
+}
+
+.posPlayoff {
+  background-color: #238636;
+  color: #ffffff;
+}
+
+.tdEquipo { text-align: left !important; }
+
+.tdPts {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #d29922;
+}
+
+.tdGe {
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: #a3b3cc;
+}
+
+/* Celda equipo: logo + nombre */
+.equipoWrap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.escudo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.escudoVacio {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.equipoNombre {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Diferencia goles coloreada */
+.pos { color: #3fb950; font-weight: 700; }
+.neg { color: #f85149; font-weight: 700; }
+
+/* ─────────────────────────────
+   LEYENDA
+───────────────────────────── */
+.leyenda {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.leyendaItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #8b949e;
+}
+
+.leyendaBadge {
+  display: inline-block;
+  background: #238636;
+  color: white;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+/* ─────────────────────────────
+   MENSAJES
+───────────────────────────── */
+.msg    { color: #8b949e; text-align: center; padding: 24px 0; font-size: 0.9rem; }
+.msgErr { color: #f85149; text-align: center; padding: 24px 0; font-size: 0.9rem; }
+
+/* ─────────────────────────────
+   RESPONSIVE
+───────────────────────────── */
+@media (max-width: 600px) {
+  .table { font-size: 0.7rem; }
+  .table th { padding: 6px 1px; font-size: 0.5rem; letter-spacing: 0; }
+  .table td { padding: 6px 1px; text-align: center; }
+  .tdEquipo { text-align: left !important; }
+  
+  .thNum { width: 24px; }
+  .thPts { width: 30px; font-size: 0.7rem; }
+  .thPos { width: 24px; font-size: 0.7rem; }
+  
+  .tdPts { font-size: 0.75rem; }
+  .tdPos { font-size: 0.65rem; }
+  .equipoNombre { font-size: 0.75rem; }
+  
+  .escudo, .escudoVacio { width: 16px; height: 16px; }
+  .equipoWrap { gap: 3px; }
+}

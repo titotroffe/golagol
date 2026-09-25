@@ -1,0 +1,116 @@
+.authPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 0%, #0d2b0d 0%, #0d1117 70%);
+  padding: 24px;
+}
+
+.card {
+  background: #161b22;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.cardHeader {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.ball { font-size: 3rem; }
+
+.titulo {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #f0f6fc;
+  margin: 8px 0 4px;
+}
+
+.subtitulo {
+  color: #8b949e;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.form { display: flex; flex-direction: column; gap: 16px; }
+
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+
+.field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.field input,
+.field select {
+  background: #0d1117;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: #f0f6fc;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: #238636;
+}
+
+.inputError { border-color: #f85149 !important; }
+
+.error {
+  font-size: 0.75rem;
+  color: #f85149;
+}
+
+.errorBox {
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.3);
+  color: #f85149;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.btnPrimary {
+  background: #238636;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.15s;
+}
+
+.btnPrimary:hover:not(:disabled) { background: #2ea043; }
+.btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.linkText {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #8b949e;
+  margin: 0;
+}
+
+.link { color: #58a6ff; text-decoration: none; font-weight: 600; }
+.link:hover { text-decoration: underline; }

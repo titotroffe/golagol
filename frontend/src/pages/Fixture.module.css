@@ -1,0 +1,240 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.secHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.secTitle {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: #c9d1d9;
+}
+
+/* ─────────────────────────────
+   SELECTOR DE FECHAS (SCROLL)
+───────────────────────────── */
+.fechasScroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 8px; /* space for scrollbar */
+}
+
+.fechasScroll::-webkit-scrollbar { height: 4px; }
+.fechasScroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+.fechasTrack {
+  display: inline-flex;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.fechaPill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #8b949e;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.fechaPill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #c9d1d9;
+}
+
+.fechaActive {
+  background: rgba(35, 134, 54, 0.15) !important;
+  border-color: rgba(35, 134, 54, 0.4) !important;
+  color: #3fb950 !important;
+}
+
+/* ─────────────────────────────
+   LISTA DE PARTIDOS
+───────────────────────────── */
+.partidosList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.partidoCard {
+  background: rgba(22, 27, 34, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.equipo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.equipoLocal {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.equipoVisita {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.equipoNombre {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #c9d1d9;
+}
+
+.escudo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.escudoVacio {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+/* Marcador central */
+.marcadorCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+.vsBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.vsText {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #484f58;
+}
+
+.horaText {
+  font-size: 0.7rem;
+  color: #8b949e;
+  background: rgba(255,255,255,0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.golesBlock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,0,0,0.3);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.gol {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #8b949e;
+}
+
+.golSep {
+  font-size: 0.9rem;
+  color: #484f58;
+}
+
+.golGana {
+  color: #ffffff;
+}
+
+.enVivoBadge {
+  background: #f85149;
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  animation: pulse 2s infinite;
+}
+
+.finBadge {
+  background: rgba(255,255,255,0.1);
+  color: #8b949e;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+.msg {
+  color: #8b949e;
+  text-align: center;
+  padding: 24px 0;
+  font-size: 0.9rem;
+}
+
+/* ─────────────────────────────
+   RESPONSIVE MOBILE
+───────────────────────────── */
+@media (max-width: 600px) {
+  .partidoCard {
+    padding: 12px 8px;
+  }
+  
+  .equipo {
+    gap: 6px;
+  }
+  
+  .equipoNombre {
+    font-size: 0.75rem;
+    line-height: 1.1;
+  }
+  
+  .escudo, .escudoVacio {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .marcadorCol {
+    width: 60px;
+  }
+  
+  .gol {
+    font-size: 1rem;
+  }
+}

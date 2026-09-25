@@ -1,0 +1,347 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.secHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.secTitle {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: #c9d1d9;
+}
+
+.secSub {
+  font-size: 0.8rem;
+  color: #8b949e;
+}
+
+.warningBox {
+  background: rgba(210, 153, 34, 0.1);
+  border: 1px solid rgba(210, 153, 34, 0.4);
+  color: #d29922;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* ─────────────────────────────
+   SELECTOR DE FECHAS
+───────────────────────────── */
+.fechasScroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 8px;
+}
+
+.fechasScroll::-webkit-scrollbar { height: 4px; }
+.fechasScroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+.fechasTrack {
+  display: inline-flex;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.fechaPill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #8b949e;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.fechaPill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #c9d1d9;
+}
+
+.fechaActive {
+  background: rgba(35, 134, 54, 0.15) !important;
+  border-color: rgba(35, 134, 54, 0.4) !important;
+  color: #3fb950 !important;
+}
+
+/* ─────────────────────────────
+   LISTA DE PARTIDOS
+───────────────────────────── */
+.partidosList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.partidoCard {
+  background: rgba(22, 27, 34, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mainRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.equipo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.equipoLocal {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.equipoVisita {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.equipoNombre {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #c9d1d9;
+}
+
+.escudo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.escudoVacio {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+/* ─────────────────────────────
+   MARCADOR CENTRAL (ADMIN)
+───────────────────────────── */
+.marcadorCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.inputGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.inputGol {
+  width: 36px;
+  height: 36px;
+  text-align: center;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 800;
+  outline: none;
+  transition: border-color 0.2s;
+  -moz-appearance: textfield;
+}
+
+.inputGol::-webkit-outer-spin-button,
+.inputGol::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.inputGol:focus {
+  border-color: #d29922; /* Amarillo admin */
+}
+
+.inputGol:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.05);
+}
+
+.golSep {
+  font-size: 0.9rem;
+  color: #484f58;
+}
+
+.btnSave {
+  background: #d29922;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.btnSave:hover {
+  background: #e3a92b;
+}
+
+.btnSave:disabled {
+  background: rgba(210, 153, 34, 0.3);
+  color: rgba(255,255,255,0.5);
+  cursor: not-allowed;
+}
+
+.finBadge {
+  background: rgba(35, 134, 54, 0.1);
+  color: #3fb950;
+  border: 1px solid rgba(35, 134, 54, 0.3);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.msg {
+  color: #8b949e;
+  text-align: center;
+  padding: 24px 0;
+  font-size: 0.9rem;
+}
+
+/* ─────────────────────────────
+   PANEL EVENTOS Y GOL A GOL
+───────────────────────────── */
+.liveRow {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(255,255,255,0.1);
+}
+
+.btnLive {
+  background: rgba(210, 153, 34, 0.1);
+  color: #d29922;
+  border: 1px solid rgba(210, 153, 34, 0.3);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+}
+
+.btnLive:hover {
+  background: rgba(210, 153, 34, 0.2);
+  color: #e3a92b;
+}
+
+.btnEventosToggle {
+  background: transparent;
+  color: #8b949e;
+  border: none;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: color 0.2s;
+}
+.btnEventosToggle:hover { color: #c9d1d9; }
+
+.eventosPanel {
+  width: 100%;
+  display: flex;
+  gap: 16px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(255,255,255,0.1);
+}
+
+.evCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.evTitle {
+  font-size: 0.7rem;
+  color: #8b949e;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.evInputRow {
+  display: flex;
+  gap: 4px;
+}
+
+.evInput {
+  flex: 1;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  color: white;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  outline: none;
+}
+.evInput:focus { border-color: #d29922; }
+
+.evBtn {
+  background: #238636;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.evBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ─────────────────────────────
+   RESPONSIVE
+───────────────────────────── */
+@media (max-width: 600px) {
+  .partidoCard { padding: 12px 8px; }
+  .equipo { gap: 6px; }
+  .equipoNombre { font-size: 0.75rem; line-height: 1.1; }
+  .escudo, .escudoVacio { width: 24px; height: 24px; }
+  .marcadorCol { width: 90px; }
+  .inputGol { width: 32px; height: 32px; font-size: 1rem; }
+  .btnSave { padding: 4px 8px; font-size: 0.7rem; }
+  
+  .eventosPanel { flex-direction: column; gap: 12px; }
+}
