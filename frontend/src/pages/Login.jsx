@@ -22,7 +22,6 @@ export default function Login() {
     <div className={styles.authPage}>
       <div className={styles.card}>
         <div className={styles.cardHeader}>
-          <span className={styles.ball}>⚽</span>
           <h1 className={styles.titulo}>Liga Nicoleña</h1>
           <p className={styles.subtitulo}>Iniciar sesión</p>
         </div>

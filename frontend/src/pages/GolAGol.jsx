@@ -137,13 +137,13 @@ function EquipoPanel({
       <div className={styles.actionFormBox}>
         <div className={styles.actionFormHeader}>
           <h4>
-            {pendingAction === 'GOL' && '⚽ Registrar Gol'}
-            {pendingAction === 'AMARILLA' && '🟨 Sacar Amarilla'}
-            {pendingAction === 'ROJA' && '🟥 Sacar Roja'}
-            {pendingAction === 'CAMBIO' && '🔄 Registrar Cambio'}
-            {pendingAction === 'PATEAR_PENAL' && '🎯 Ejecutar Penal'}
+            {pendingAction === 'GOL' && 'Registrar Gol'}
+            {pendingAction === 'AMARILLA' && 'Sacar Amarilla'}
+            {pendingAction === 'ROJA' && 'Sacar Roja'}
+            {pendingAction === 'CAMBIO' && 'Registrar Cambio'}
+            {pendingAction === 'PATEAR_PENAL' && 'Ejecutar Penal'}
           </h4>
-          <button onClick={() => setPendingAction(null)} className={styles.btnRemove}>✖</button>
+          <button onClick={() => setPendingAction(null)} className={styles.btnRemove}>X</button>
         </div>
         
         <div className={styles.actionFormBody}>
@@ -176,9 +176,9 @@ function EquipoPanel({
 
           {pendingAction === 'PATEAR_PENAL' ? (
             <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-              <button onClick={() => executeAction('1')} className={styles.btnConfirmAction} disabled={!actionForm.jugadorId} style={{flex: 1}}>⚽ GOL</button>
-              <button onClick={() => executeAction('2')} className={styles.btnConfirmAction} disabled={!actionForm.jugadorId} style={{flex: 1, backgroundColor: '#da3633'}}>❌ ERRADO</button>
-              <button onClick={() => executeAction('3')} className={styles.btnConfirmAction} disabled={!actionForm.jugadorId} style={{flex: 1, backgroundColor: '#bf8700'}}>🧤 ATAJADO</button>
+              <button onClick={() => executeAction('1')} className={styles.btnConfirmAction} disabled={!actionForm.jugadorId} style={{flex: 1}}>GOL</button>
+              <button onClick={() => executeAction('2')} className={styles.btnConfirmAction} disabled={!actionForm.jugadorId} style={{flex: 1, backgroundColor: '#da3633'}}>ERRADO</button>
+              <button onClick={() => executeAction('3')} className={styles.btnConfirmAction} disabled={!actionForm.jugadorId} style={{flex: 1, backgroundColor: '#bf8700'}}>ATAJADO</button>
             </div>
           ) : (
             <button 
@@ -202,14 +202,14 @@ function EquipoPanel({
       <h2 className={styles.eqTitle}>{nombre}</h2>
 
       <div className={styles.teamActionsBtnGroup}>
-        <button onClick={()=>setPendingAction('GOL')} className={styles.btnTeamAction}>⚽ Gol</button>
+        <button onClick={()=>setPendingAction('GOL')} className={styles.btnTeamAction}>Gol</button>
         <button onClick={() => {
           registrarEventoMut.mutate({tipo: 'PENAL_A_FAVOR', equipo_id: equipoId, detalle: esLocal ? 'Local' : 'Visita', minuto: 0});
           setPendingAction('PATEAR_PENAL');
-        }} className={styles.btnTeamAction}>🎯 Penal</button>
-        <button onClick={()=>setPendingAction('AMARILLA')} className={styles.btnTeamAction}>🟨 Amarilla</button>
-        <button onClick={()=>setPendingAction('ROJA')} className={styles.btnTeamAction}>🟥 Roja</button>
-        <button onClick={()=>setPendingAction('CAMBIO')} className={styles.btnTeamAction}>🔄 Cambio</button>
+        }} className={styles.btnTeamAction}>Penal</button>
+        <button onClick={()=>setPendingAction('AMARILLA')} className={styles.btnTeamAction}>Amarilla</button>
+        <button onClick={()=>setPendingAction('ROJA')} className={styles.btnTeamAction}>Roja</button>
+        <button onClick={()=>setPendingAction('CAMBIO')} className={styles.btnTeamAction}>Cambio</button>
       </div>
 
       {renderActionForm()}
@@ -410,7 +410,7 @@ export default function GolAGol() {
           <div className={styles.scoreTeam}>{partido.visita_nombre}</div>
         </div>
         <div className={styles.estadoIndicator}>
-          {partido.estado === 'pendiente' ? 'Esperando inicio' : (partido.estado === 'en_curso' ? '🔴 EN VIVO' : 'FINALIZADO')}
+          {partido.estado === 'pendiente' ? 'Esperando inicio' : (partido.estado === 'en_curso' ? 'EN VIVO' : 'FINALIZADO')}
         </div>
       </div>
 
@@ -428,14 +428,14 @@ export default function GolAGol() {
         {/* PANEL CENTRAL: EVENTOS RECIENTES Y CONTROLES DE PARTIDO */}
         <div className={styles.feedCol}>
           <div className={styles.matchControls}>
-            <button onClick={() => regEvento.mutate({tipo: 'INICIO_PARTIDO', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>⏱ Inicio 1T</button>
-            <button onClick={() => regEvento.mutate({tipo: 'FIN_1T', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>🛑 Fin 1T</button>
-            <button onClick={() => regEvento.mutate({tipo: 'INICIO_2T', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>⏱ Inicio 2T</button>
-            <button onClick={() => regEvento.mutate({tipo: 'FIN_PARTIDO', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>🏁 Fin</button>
+            <button onClick={() => regEvento.mutate({tipo: 'INICIO_PARTIDO', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Inicio 1T</button>
+            <button onClick={() => regEvento.mutate({tipo: 'FIN_1T', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Fin 1T</button>
+            <button onClick={() => regEvento.mutate({tipo: 'INICIO_2T', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Inicio 2T</button>
+            <button onClick={() => regEvento.mutate({tipo: 'FIN_PARTIDO', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Fin Partido</button>
             <button onClick={() => {
-              const min = prompt("¿Cuántos minutos agrega el árbitro?");
+              const min = prompt("Cuantos minutos agrega el arbitro?");
               if (min) regEvento.mutate({tipo: 'TIEMPO_EXTRA', equipo_id: null, detalle: min});
-            }} className={styles.btnMatchState}>➕ Adición</button>
+            }} className={styles.btnMatchState}>Adicion</button>
           </div>
           <h3 className={styles.feedTitle}>Eventos Registrados</h3>
           <div className={styles.feedScroll}>

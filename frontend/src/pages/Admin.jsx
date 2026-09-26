@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { torneosApi, partidosApi, equiposApi } from '../api';
 import { useTorneoStore, useAuthStore } from '../store';
 import { Navigate, Link } from 'react-router-dom';
+import AdminHistorico from './AdminHistorico';
 import styles from './Admin.module.css';
 
 function PartidoAdminCard({ partido }) {
@@ -159,7 +160,7 @@ function PartidoAdminCard({ partido }) {
 
       <div className={styles.liveRow}>
         <Link to={`/admin/partido/${partido.id}`} className={styles.btnLive}>
-          🔴 Gol a Gol / Transmisión en Vivo
+          Gol a Gol / Transmision en Vivo
         </Link>
       </div>
 
@@ -231,6 +232,7 @@ export default function Admin() {
   const usuario = useAuthStore((s) => s.usuario);
   const torneoActivo = useTorneoStore((s) => s.torneoActivo);
   const [selectedFecha, setSelectedFecha] = useState(null);
+  const [tab, setTab] = useState('resultados');
 
   // Proteger ruta
   if (!usuario || (usuario.rol !== 'admin' && usuario.rol !== 'reportero')) {
@@ -263,42 +265,65 @@ export default function Admin() {
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.secHead}>
-        <span className={styles.secTitle}>Panel de Control Admin</span>
-        <span className={styles.secSub}>Carga de resultados reales de los partidos</span>
+      {/* Tabs de navegación */}
+      <div className={styles.adminTabs}>
+        <button
+          className={`${styles.adminTab} ${tab === 'resultados' ? styles.adminTabActive : ''}`}
+          onClick={() => setTab('resultados')}
+        >
+          Carga de Resultados
+        </button>
+        <button
+          className={`${styles.adminTab} ${tab === 'historico' ? styles.adminTabActive : ''}`}
+          onClick={() => setTab('historico')}
+        >
+          Torneos Historicos
+        </button>
       </div>
 
-      <div className={styles.warningBox}>
-        ⚠️ <strong>Atención:</strong> Al "Cargar Final", el partido se marcará como finalizado y se repartirán automáticamente los puntos del Prode a todos los usuarios. ¡Asegurate de que el resultado sea correcto!
-      </div>
+      {tab === 'historico' && <AdminHistorico />}
 
-      {/* Selector de Fechas */}
-      <div className={styles.fechasScroll}>
-        <div className={styles.fechasTrack}>
-          {fechas?.map(f => (
-            <button
-              key={f.id}
-              className={`${styles.fechaPill} ${selectedFecha?.id === f.id ? styles.fechaActive : ''}`}
-              onClick={() => setSelectedFecha(f)}
-            >
-              F{f.numero}
-            </button>
-          ))}
-        </div>
-      </div>
+      {tab === 'resultados' && (
+        <>
+          <div className={styles.secHead}>
+            <span className={styles.secTitle}>Panel de Control Admin</span>
+            <span className={styles.secSub}>Carga de resultados reales de los partidos</span>
+          </div>
 
-      {/* Lista de partidos de la fecha */}
-      <div className={styles.partidosList}>
-        {loadingPartidos && <p className={styles.msg}>Cargando partidos...</p>}
-        
-        {!loadingPartidos && partidos?.length === 0 && (
-          <p className={styles.msg}>No hay partidos en esta fecha.</p>
-        )}
+          <div className={styles.warningBox}>
+            <strong>Atencion:</strong> Al "Cargar Final", el partido se marcará como finalizado y se repartirán automáticamente los puntos del Prode a todos los usuarios. ¡Asegurate de que el resultado sea correcto!
+          </div>
 
-        {!loadingPartidos && partidos?.map(p => (
-          <PartidoAdminCard key={p.id} partido={p} />
-        ))}
-      </div>
+          {/* Selector de Fechas */}
+          <div className={styles.fechasScroll}>
+            <div className={styles.fechasTrack}>
+              {fechas?.map(f => (
+                <button
+                  key={f.id}
+                  className={`${styles.fechaPill} ${selectedFecha?.id === f.id ? styles.fechaActive : ''}`}
+                  onClick={() => setSelectedFecha(f)}
+                >
+                  F{f.numero}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Lista de partidos de la fecha */}
+          <div className={styles.partidosList}>
+            {loadingPartidos && <p className={styles.msg}>Cargando partidos...</p>}
+
+            {!loadingPartidos && partidos?.length === 0 && (
+              <p className={styles.msg}>No hay partidos en esta fecha.</p>
+            )}
+
+            {!loadingPartidos && partidos?.map(p => (
+              <PartidoAdminCard key={p.id} partido={p} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
+

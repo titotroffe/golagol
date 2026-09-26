@@ -52,6 +52,8 @@ export const torneosApi = {
   fechas: (id) => request(`/torneos/${id}/fechas`),
   simularTabla: (id, resultados) =>
     request(`/torneos/${id}/simular-tabla`, { method: 'POST', body: JSON.stringify({ resultados }) }),
+  cargarHistorico: (body) =>
+    request('/torneos/historico', { method: 'POST', body: JSON.stringify(body) }),
 };
 
 // ── PARTIDOS ──────────────────────────────────────────

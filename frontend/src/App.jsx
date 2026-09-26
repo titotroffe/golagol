@@ -14,9 +14,9 @@ import Equipos from './pages/Equipos';
 import GolAGol from './pages/GolAGol';
 
 // Placeholders para páginas que construiremos a continuación
-const Estadisticas= () => <div style={{padding:40, color:'#8b949e'}}>📊 Estadísticas — próximamente</div>;
-const Sancionados = () => <div style={{padding:40, color:'#8b949e'}}>🟥 Sancionados — próximamente</div>;
-const Simular     = () => <div style={{padding:40, color:'#8b949e'}}>🔮 Simular Tabla — próximamente</div>;
+const Estadisticas= () => <div style={{padding:40, color:'#8b949e'}}>Estadisticas — proximamente</div>;
+const Sancionados = () => <div style={{padding:40, color:'#8b949e'}}>Sancionados — proximamente</div>;
+const Simular     = () => <div style={{padding:40, color:'#8b949e'}}>Simular Tabla — proximamente</div>;
 
 const queryClient = new QueryClient({
   defaultOptions: {

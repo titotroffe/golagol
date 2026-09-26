@@ -49,7 +49,7 @@ export default function Layout() {
         {/* Fila 1: logo + estado + usuario */}
         <div className={styles.headerTop}>
           <div className={styles.logo}>
-            <span className={styles.logoBall}>⚽</span>
+            <span className={styles.logoBall}></span>
             <span className={styles.logoText}>Liga Nicoleña</span>
           </div>
 

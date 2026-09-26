@@ -4,6 +4,57 @@ const { authMiddleware, soloAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
+function ordenarTabla(equipos, partidos) {
+  const porPuntos = {};
+  equipos.forEach(eq => {
+    if (!porPuntos[eq.puntos]) porPuntos[eq.puntos] = [];
+    porPuntos[eq.puntos].push(eq);
+  });
+
+  const puntajesUnicos = Object.keys(porPuntos).map(Number).sort((a, b) => b - a);
+  let tablaOrdenada = [];
+
+  for (const pts of puntajesUnicos) {
+    const grupo = porPuntos[pts];
+    if (grupo.length === 1) {
+      tablaOrdenada.push(grupo[0]);
+    } else {
+      const idsGrupo = grupo.map(e => e.equipo_id);
+      const miniTablaPts = {};
+      idsGrupo.forEach(id => miniTablaPts[id] = 0);
+
+      partidos.forEach(p => {
+        if (idsGrupo.includes(p.equipo_local_id) && idsGrupo.includes(p.equipo_visita_id)) {
+          const gl = p.goles_local;
+          const gv = p.goles_visita;
+          if (gl > gv) {
+            miniTablaPts[p.equipo_local_id] += 3;
+          } else if (gl < gv) {
+            miniTablaPts[p.equipo_visita_id] += 3;
+          } else if (gl === gv) {
+            miniTablaPts[p.equipo_local_id] += 1;
+            miniTablaPts[p.equipo_visita_id] += 1;
+          }
+        }
+      });
+
+      grupo.sort((a, b) => {
+        const ptsA = miniTablaPts[a.equipo_id];
+        const ptsB = miniTablaPts[b.equipo_id];
+        if (ptsA !== ptsB) return ptsB - ptsA; // Criterio 2: Puntos en partidos entre sí
+        if (a.dg !== b.dg) return b.dg - a.dg; // Criterio 3: Diferencia de goles
+        if (a.gf !== b.gf) return b.gf - a.gf; // Criterio 4: Goles a favor
+        return a.nombre.localeCompare(b.nombre);
+      });
+
+      tablaOrdenada.push(...grupo);
+    }
+  }
+
+  tablaOrdenada.forEach((eq, idx) => eq.posicion = idx + 1);
+  return tablaOrdenada;
+}
+
 // GET /api/torneos - Listar torneos
 router.get('/', (req, res) => {
   const torneos = db.prepare('SELECT * FROM torneos ORDER BY temporada DESC, id ASC').all();
@@ -59,23 +110,16 @@ router.get('/:id/tabla', (req, res) => {
     dg: r.gf - r.gc
   }));
 
-  // Ordenar con criterios de desempate
-  tabla.sort((a, b) => {
-    if (b.puntos !== a.puntos) return b.puntos - a.puntos;
-    // Criterio 2: diferencia de goles
-    if (b.dg !== a.dg) return b.dg - a.dg;
-    // Criterio 3: goles a favor
-    if (b.gf !== a.gf) return b.gf - a.gf;
-    // Criterio 4: alfabético
-    return a.nombre.localeCompare(b.nombre);
-  });
+  // Traer los partidos del torneo para desempate (partidos entre sí)
+  const partidos = db.prepare(`
+    SELECT p.equipo_local_id, p.equipo_visita_id, p.goles_local, p.goles_visita
+    FROM partidos p
+    JOIN fechas f ON f.id = p.fecha_id
+    WHERE f.torneo_id = ? AND p.estado = 'finalizado'
+  `).all(torneo_id);
 
-  // Agregar posición
-  tabla.forEach((equipo, idx) => {
-    equipo.posicion = idx + 1;
-  });
-
-  res.json(tabla);
+  const tablaOrdenada = ordenarTabla(tabla, partidos);
+  res.json(tablaOrdenada);
 });
 
 // ─────────────────────────────────────────
@@ -198,6 +242,8 @@ router.post('/:id/simular-tabla', (req, res) => {
     overrides[r.partido_id] = { gl: r.goles_local, gv: r.goles_visita };
   });
 
+  const partidosResueltos = [];
+
   partidos.forEach(p => {
     let gl, gv;
     if (overrides[p.id]) {
@@ -209,6 +255,13 @@ router.post('/:id/simular-tabla', (req, res) => {
     } else {
       return; // Partido sin resultado y sin simulación: no contar
     }
+
+    partidosResueltos.push({
+      equipo_local_id: p.equipo_local_id,
+      equipo_visita_id: p.equipo_visita_id,
+      goles_local: gl,
+      goles_visita: gv
+    });
 
     const local = stats[p.equipo_local_id];
     const visita = stats[p.equipo_visita_id];
@@ -223,22 +276,15 @@ router.post('/:id/simular-tabla', (req, res) => {
     else { local.pe++; visita.pe++; }
   });
 
-  // Calcular puntos y ordenar
+  // Calcular puntos
   const tabla = Object.values(stats).map(e => ({
     ...e,
     puntos: (e.pg * 3) + e.pe,
     dg: e.gf - e.gc
   }));
 
-  tabla.sort((a, b) => {
-    if (b.puntos !== a.puntos) return b.puntos - a.puntos;
-    if (b.dg !== a.dg) return b.dg - a.dg;
-    if (b.gf !== a.gf) return b.gf - a.gf;
-    return a.nombre.localeCompare(b.nombre);
-  });
-
-  tabla.forEach((e, i) => e.posicion = i + 1);
-  res.json(tabla);
+  const tablaOrdenada = ordenarTabla(tabla, partidosResueltos);
+  res.json(tablaOrdenada);
 });
 
 // ADMIN: POST /api/torneos - Crear torneo
@@ -260,6 +306,75 @@ router.post('/:id/equipos', authMiddleware, soloAdmin, (req, res) => {
     'INSERT OR IGNORE INTO torneo_equipos (torneo_id, equipo_id, grupo) VALUES (?, ?, ?)'
   ).run(req.params.id, equipo_id, grupo || null);
   res.status(201).json({ ok: true });
+});
+
+// ─────────────────────────────────────────
+// ADMIN: POST /api/torneos/historico
+// Carga un torneo histórico completo con equipos y partidos
+// Body: { nombre, temporada, tipo, partidos: [{ local, visita, goles_local, goles_visita }] }
+// ─────────────────────────────────────────
+router.post('/historico', authMiddleware, soloAdmin, (req, res) => {
+  const { nombre, temporada, tipo = 'liga', partidos = [] } = req.body;
+  if (!nombre || !temporada) return res.status(400).json({ error: 'Nombre y temporada son requeridos' });
+
+  const insertTodo = db.transaction(() => {
+    // 1. Crear el torneo
+    const torneoResult = db.prepare(
+      'INSERT INTO torneos (nombre, tipo, temporada) VALUES (?, ?, ?)'
+    ).run(nombre, tipo, temporada);
+    const torneo_id = torneoResult.lastInsertRowid;
+
+    // 2. Crear una sola fecha para el torneo histórico
+    const fechaResult = db.prepare(
+      'INSERT INTO fechas (torneo_id, numero, estado) VALUES (?, 1, ?)'
+    ).run(torneo_id, 'cerrada');
+    const fecha_id = fechaResult.lastInsertRowid;
+
+    // 3. Procesar equipos únicos del listado de partidos
+    const equiposNombres = new Set();
+    partidos.forEach(p => {
+      if (p.local?.trim()) equiposNombres.add(p.local.trim());
+      if (p.visita?.trim()) equiposNombres.add(p.visita.trim());
+    });
+
+    const equipoIdPorNombre = {};
+    for (const nombre_eq of equiposNombres) {
+      // Buscar si ya existe el equipo
+      let equipo = db.prepare('SELECT id FROM equipos WHERE nombre = ?').get(nombre_eq);
+      if (!equipo) {
+        const r = db.prepare('INSERT INTO equipos (nombre) VALUES (?)').run(nombre_eq);
+        equipo = { id: r.lastInsertRowid };
+      }
+      equipoIdPorNombre[nombre_eq] = equipo.id;
+      // Inscribir en el torneo
+      db.prepare('INSERT OR IGNORE INTO torneo_equipos (torneo_id, equipo_id) VALUES (?, ?)')
+        .run(torneo_id, equipo.id);
+    }
+
+    // 4. Insertar los partidos como finalizados
+    let insertados = 0;
+    for (const p of partidos) {
+      if (!p.local?.trim() || !p.visita?.trim()) continue;
+      const gl = parseInt(p.goles_local, 10);
+      const gv = parseInt(p.goles_visita, 10);
+      if (isNaN(gl) || isNaN(gv)) continue;
+
+      db.prepare(`
+        INSERT INTO partidos (fecha_id, equipo_local_id, equipo_visita_id, goles_local, goles_visita, estado)
+        VALUES (?, ?, ?, ?, ?, 'finalizado')
+      `).run(fecha_id, equipoIdPorNombre[p.local.trim()], equipoIdPorNombre[p.visita.trim()], gl, gv);
+      insertados++;
+    }
+
+    return { torneo_id, equipos: equiposNombres.size, partidos: insertados };
+  });
+
+  try {
+    const result = insertTodo();
+    res.status(201).json({ ok: true, ...result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

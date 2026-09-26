@@ -33,7 +33,6 @@ export default function Registro() {
     <div className={styles.authPage}>
       <div className={styles.card}>
         <div className={styles.cardHeader}>
-          <span className={styles.ball}>⚽</span>
           <h1 className={styles.titulo}>Liga Nicoleña</h1>
           <p className={styles.subtitulo}>Crear cuenta</p>
         </div>
@@ -87,9 +86,26 @@ export default function Registro() {
               type="password"
               {...register('password', { required: 'Requerido', minLength: { value: 6, message: 'Mínimo 6 caracteres' } })}
               placeholder="••••••"
+              autoComplete="new-password"
               className={errors.password ? styles.inputError : ''}
             />
             {errors.password && <span className={styles.error}>{errors.password.message}</span>}
+          </div>
+
+          <div className={styles.field}>
+            <label>Confirmar contraseña</label>
+            <input
+              type="password"
+              {...register('confirmar_password', {
+                required: 'Requerido',
+                validate: (val) =>
+                  val === watch('password') || 'Las contraseñas no coinciden',
+              })}
+              placeholder="••••••"
+              autoComplete="new-password"
+              className={errors.confirmar_password ? styles.inputError : ''}
+            />
+            {errors.confirmar_password && <span className={styles.error}>{errors.confirmar_password.message}</span>}
           </div>
 
           <div className={styles.field}>
