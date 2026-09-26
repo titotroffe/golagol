@@ -112,6 +112,36 @@ router.post('/', authMiddleware, soloAdmin, (req, res) => {
   res.status(201).json({ id: result.lastInsertRowid });
 });
 
+// Helper para avanzar las sanciones cuando un partido finaliza
+const avanzarSanciones = (partido_id) => {
+  const partido = db.prepare(`
+    SELECT p.estado, f.torneo_id, p.equipo_local_id, p.equipo_visita_id 
+    FROM partidos p 
+    JOIN fechas f ON f.id = p.fecha_id 
+    WHERE p.id = ?
+  `).get(partido_id);
+
+  if (partido && partido.estado !== 'finalizado') {
+    db.transaction(() => {
+      // 1. Incrementar fechas cumplidas a los jugadores sancionados de los equipos que jugaron
+      db.prepare(`
+        UPDATE sanciones 
+        SET fechas_cumplidas = fechas_cumplidas + 1
+        WHERE torneo_id = ? AND activa = 1 AND jugador_id IN (
+          SELECT id FROM jugadores WHERE equipo_id IN (?, ?)
+        )
+      `).run(partido.torneo_id, partido.equipo_local_id, partido.equipo_visita_id);
+
+      // 2. Desactivar sanciones que ya cumplieron todas sus fechas
+      db.prepare(`
+        UPDATE sanciones
+        SET activa = 0
+        WHERE activa = 1 AND fechas_cumplidas >= fechas_a_cumplir
+      `).run();
+    })();
+  }
+};
+
 // ─────────────────────────────────────────
 // REPORTERO: PUT /api/partidos/:id/resultado
 // Cargar el resultado final y calcular puntos del Prode automáticamente
@@ -123,6 +153,9 @@ router.put('/:id/resultado', authMiddleware, adminOReportero, (req, res) => {
   if (goles_local == null || goles_visita == null) {
     return res.status(400).json({ error: 'Goles local y visita son requeridos' });
   }
+
+  // Avanzar sanciones (solo si el partido no estaba finalizado previamente)
+  avanzarSanciones(partido_id);
 
   // Actualizar el partido
   db.prepare(`
@@ -236,6 +269,7 @@ router.post('/:id/evento', authMiddleware, adminOReportero, (req, res) => {
     db.prepare("UPDATE partidos SET estado = 'en_curso' WHERE id = ?").run(partido_id);
   }
   if (tipo === 'FIN_PARTIDO') {
+    avanzarSanciones(partido_id);
     db.prepare("UPDATE partidos SET estado = 'finalizado' WHERE id = ?").run(partido_id);
   }
 

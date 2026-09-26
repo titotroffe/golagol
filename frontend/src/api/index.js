@@ -104,3 +104,11 @@ export const prodeApi = {
   misGrupos: () => request('/prode/grupos/mis-grupos'),
   rankingGrupo: (grupoId) => request(`/prode/grupos/${grupoId}/ranking`),
 };
+
+// ── SANCIONES ─────────────────────────────────────────
+export const sancionesApi = {
+  listarPorTorneo: (torneoId) => request(`/sanciones/torneo/${torneoId}`),
+  crear: (body) => request('/sanciones', { method: 'POST', body: JSON.stringify(body) }),
+  editar: (id, body) => request(`/sanciones/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  eliminar: (id) => request(`/sanciones/${id}`, { method: 'DELETE' }),
+};

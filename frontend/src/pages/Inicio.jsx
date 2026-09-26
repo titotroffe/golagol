@@ -29,7 +29,7 @@ export default function Inicio() {
   if (isLoading) return <p className={styles.msg}>Cargando inicio...</p>;
   if (error) return <p className={styles.msg}>Error al cargar datos.</p>;
 
-  const { enVivo, proximos } = data;
+  const { enVivo, proximos, sancionados } = data;
 
   return (
     <div className={styles.wrap}>
@@ -111,7 +111,13 @@ export default function Inicio() {
                       <span className={styles.equipoNombre}>{p.visita_nombre}</span>
                     </div>
                   </div>
-                  {p.cancha && <div className={styles.canchaInfo}>📍 {p.cancha}</div>}
+                  
+                  {(p.cancha || p.arbitro) && (
+                    <div className={styles.partidoFooter}>
+                      {p.cancha && <span>🏟️ {p.cancha}</span>}
+                      {p.arbitro && <span>👤 {p.arbitro}</span>}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -120,6 +126,35 @@ export default function Inicio() {
           <p className={styles.noData}>No hay partidos programados próximamente.</p>
         )}
       </section>
+
+      {/* SECCIÓN SANCIONADOS */}
+      {sancionados && sancionados.length > 0 && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Bajas por Sanción</h2>
+          <div className={styles.sancionadosList}>
+            {sancionados.map(s => (
+              <div key={s.id} className={styles.sancionadoCard}>
+                <div className={styles.sancionadoInfo}>
+                  <img src={s.equipo_escudo} alt="" className={styles.sancionadoEscudo} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <strong className={styles.sancionadoNombre}>{s.nombre} {s.apellido}</strong>
+                      <span className={styles.sancionadoEquipo}>({s.equipo_nombre})</span>
+                    </div>
+                  </div>
+                </div>
+                <div className={styles.sancionadoEstado}>
+                  {s.fechas_restantes === 1 ? (
+                    <span className={styles.badgeUltima}>Última fecha</span>
+                  ) : (
+                    <span className={styles.badgeVarias}>Faltan {s.fechas_restantes} fechas</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

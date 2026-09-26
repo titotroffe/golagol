@@ -4,6 +4,7 @@ import { torneosApi, partidosApi, equiposApi } from '../api';
 import { useTorneoStore, useAuthStore } from '../store';
 import { Navigate, Link } from 'react-router-dom';
 import AdminHistorico from './AdminHistorico';
+import AdminSanciones from './AdminSanciones';
 import styles from './Admin.module.css';
 
 function PartidoAdminCard({ partido }) {
@@ -386,12 +387,20 @@ export default function Admin() {
           Carga de Resultados
         </button>
         <button
+          className={`${styles.adminTab} ${tab === 'sanciones' ? styles.adminTabActive : ''}`}
+          onClick={() => setTab('sanciones')}
+        >
+          Sanciones
+        </button>
+        <button
           className={`${styles.adminTab} ${tab === 'historico' ? styles.adminTabActive : ''}`}
           onClick={() => setTab('historico')}
         >
           Torneos Historicos
         </button>
       </div>
+
+      {tab === 'sanciones' && <AdminSanciones />}
 
       {tab === 'historico' && <AdminHistorico />}
 

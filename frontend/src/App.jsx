@@ -18,6 +18,7 @@ import Sancionados from './pages/Sancionados';
 import Simular from './pages/Simular';
 import Perfil from './pages/Perfil';
 import Inicio from './pages/Inicio';
+import AdminSanciones from './pages/AdminSanciones';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,6 +51,7 @@ export default function App() {
               <Route path="/simular"     element={<Simular />} />
               <Route path="/perfil"      element={<Perfil />} />
               <Route path="/admin"       element={<Admin />} />
+              <Route path="/admin/sanciones" element={<AdminSanciones />} />
             </Route>
 
             {/* Vistas protegidas a PANTALLA COMPLETA (sin Sidebar) */}

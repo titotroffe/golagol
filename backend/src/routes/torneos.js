@@ -119,7 +119,18 @@ router.get('/:id/inicio', (req, res) => {
     `).all(proximaFechaQuery.fecha_id);
   }
 
-  res.json({ enVivo, proximos });
+  // Jugadores sancionados que se pierden la próxima fecha
+  const sancionados = db.prepare(`
+    SELECT s.*, j.nombre, j.apellido, e.nombre as equipo_nombre, e.escudo_url as equipo_escudo,
+           (s.fechas_a_cumplir - s.fechas_cumplidas) as fechas_restantes
+    FROM sanciones s
+    JOIN jugadores j ON j.id = s.jugador_id
+    JOIN equipos e ON e.id = j.equipo_id
+    WHERE s.torneo_id = ? AND s.activa = 1
+    ORDER BY fechas_restantes ASC, e.nombre ASC
+  `).all(torneo_id);
+
+  res.json({ enVivo, proximos, sancionados });
 });
 
 // ─────────────────────────────────────────
