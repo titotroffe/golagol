@@ -35,9 +35,7 @@ export default function Fixture() {
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.secHead}>
-        <span className={styles.secTitle}>Fixture</span>
-      </div>
+
 
       {/* Selector de Fechas (Pills horizontales) */}
       <div className={styles.fechasScroll}>

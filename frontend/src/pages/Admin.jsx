@@ -397,10 +397,7 @@ export default function Admin() {
 
       {tab === 'resultados' && (
         <>
-          <div className={styles.secHead}>
-            <span className={styles.secTitle}>Panel de Control Admin</span>
-            <span className={styles.secSub}>Carga de resultados reales de los partidos</span>
-          </div>
+
 
           <div className={styles.warningBox}>
             <strong>Atencion:</strong> Al "Cargar Final", el partido se marcará como finalizado y se repartirán automáticamente los puntos del Prode a todos los usuarios. ¡Asegurate de que el resultado sea correcto!

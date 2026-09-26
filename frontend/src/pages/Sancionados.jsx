@@ -1,4 +1,4 @@
-﻿import { useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { torneosApi } from "../api";
 import { useTorneoStore } from "../store";
 import styles from "./Tabla.module.css";
@@ -18,10 +18,7 @@ export default function Sancionados() {
   return (
     <div className={est.wrap}>
       <section className={est.section}>
-        <div className={est.secHead}>
-          <span className={est.secTitle}>Jugadores Sancionados</span>
-          <span className={est.secSub}>Jugadores con fechas pendientes de cumplir</span>
-        </div>
+
 
         {isLoading && <p className={styles.msg}>Cargando...</p>}
 

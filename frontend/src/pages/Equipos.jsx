@@ -121,10 +121,7 @@ export default function Equipos() {
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.secHead}>
-        <span className={styles.secTitle}>Equipos y Planteles</span>
-        <span className={styles.secSub}>Navegá los planteles de cada club</span>
-      </div>
+
 
       {isLoading ? (
         <p className={styles.msg}>Cargando equipos...</p>

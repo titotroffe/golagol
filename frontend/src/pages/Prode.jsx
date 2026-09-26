@@ -168,10 +168,7 @@ export default function Prode() {
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.secHead}>
-        <span className={styles.secTitle}>Prode</span>
-        <span className={styles.secSub}>Pronosticá los resultados y sumá puntos</span>
-      </div>
+
 
       {/* Selector de Fechas (Pills horizontales) */}
       <div className={styles.fechasScroll}>

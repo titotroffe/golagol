@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { torneosApi } from '../api';
 import styles from './Admin.module.css';
@@ -39,10 +39,7 @@ export default function AdminHistorico() {
 
   return (
     <div className={styles.historicoSection}>
-      <div className={styles.secHead}>
-        <span className={styles.secTitle}>Cargar Torneo Historico</span>
-        <span className={styles.secSub}>Carga resultados de torneos anteriores para armar la tabla de posiciones</span>
-      </div>
+
       <form onSubmit={handleSubmit} className={styles.historicoForm}>
         <div className={styles.historicoMeta}>
           <div className={styles.historicoField}>

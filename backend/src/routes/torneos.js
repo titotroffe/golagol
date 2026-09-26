@@ -162,7 +162,7 @@ router.get('/:id/expulsados', (req, res) => {
   const expulsados = db.prepare(`
     SELECT 
       j.id, j.nombre, j.apellido,
-      e.nombre AS equipo_nombre,
+      e.nombre AS equipo_nombre, e.escudo_url,
       COUNT(*) AS cantidad_rojas,
       GROUP_CONCAT(p.fecha_hora) AS en_partidos
     FROM eventos_partido ep
@@ -232,11 +232,15 @@ router.post('/:id/simular-tabla', (req, res) => {
     WHERE f.torneo_id = ?
   `).all(torneo_id);
 
-  // Obtener equipos del torneo
+  // Obtener equipos del torneo y sus estadisticas base
   const equipos = db.prepare(`
-    SELECT e.id, e.nombre, e.escudo_url
+    SELECT e.id, e.nombre, e.escudo_url,
+           COALESCE(eb.pj, 0) AS base_pj, COALESCE(eb.pg, 0) AS base_pg, 
+           COALESCE(eb.pe, 0) AS base_pe, COALESCE(eb.pp, 0) AS base_pp,
+           COALESCE(eb.gf, 0) AS base_gf, COALESCE(eb.gc, 0) AS base_gc
     FROM equipos e
     JOIN torneo_equipos te ON te.equipo_id = e.id
+    LEFT JOIN estadisticas_base eb ON eb.equipo_id = e.id AND eb.torneo_id = te.torneo_id
     WHERE te.torneo_id = ?
   `).all(torneo_id);
 
@@ -245,7 +249,8 @@ router.post('/:id/simular-tabla', (req, res) => {
   equipos.forEach(e => {
     stats[e.id] = {
       equipo_id: e.id, nombre: e.nombre, escudo_url: e.escudo_url,
-      pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, puntos: 0, dg: 0
+      pj: e.base_pj, pg: e.base_pg, pe: e.base_pe, pp: e.base_pp, 
+      gf: e.base_gf, gc: e.base_gc, puntos: 0, dg: 0
     };
   });
 
@@ -269,12 +274,14 @@ router.post('/:id/simular-tabla', (req, res) => {
       return; // Partido sin resultado y sin simulación: no contar
     }
 
+    const isOverride = !!overrides[p.id];
+
     partidosResueltos.push({
       equipo_local_id: p.equipo_local_id,
       equipo_visita_id: p.equipo_visita_id,
       goles_local: gl,
       goles_visita: gv,
-      ganador_escritorio: overrides[p.id] ? overrides[p.id].ge : p.ganador_escritorio
+      ganador_escritorio: isOverride ? null : p.ganador_escritorio
     });
 
     const local = stats[p.equipo_local_id];
@@ -285,7 +292,7 @@ router.post('/:id/simular-tabla', (req, res) => {
     local.gf += gl; local.gc += gv;
     visita.gf += gv; visita.gc += gl;
 
-    const win_escritorio = p.ganador_escritorio;
+    const win_escritorio = isOverride ? null : p.ganador_escritorio;
     if (win_escritorio === 'local') {
       local.pg++; visita.pp++;
     } else if (win_escritorio === 'visita') {

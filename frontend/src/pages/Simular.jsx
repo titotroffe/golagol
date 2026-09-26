@@ -4,7 +4,7 @@ import { torneosApi, partidosApi } from "../api";
 import { useTorneoStore } from "../store";
 import styles from "./Tabla.module.css";
 import est from "./Estadisticas.module.css";
-import fix from "./Fixture.module.css";
+import prodeStyles from "./Prode.module.css";
 
 export default function Simular() {
   const torneoActivo = useTorneoStore((s) => s.torneoActivo);
@@ -45,13 +45,22 @@ export default function Simular() {
     onSuccess: (data) => setTablaSimulada(data),
   });
 
-  const handleChange = (id, campo, val) => {
+  const handleChange = (partido, campo, val) => {
     const num = parseInt(val, 10);
     if (val !== "" && (isNaN(num) || num < 0 || num > 99)) return;
-    setOverrides(prev => ({
-      ...prev,
-      [id]: { ...prev[id], [campo]: val }
-    }));
+    setOverrides(prev => {
+      const current = prev[partido.id] || {};
+      const baseLocal = partido.estado === 'finalizado' ? partido.goles_local : "";
+      const baseVisita = partido.estado === 'finalizado' ? partido.goles_visita : "";
+
+      return {
+        ...prev,
+        [partido.id]: {
+          local: campo === 'local' ? val : (current.local !== undefined ? current.local : baseLocal),
+          visita: campo === 'visita' ? val : (current.visita !== undefined ? current.visita : baseVisita)
+        }
+      };
+    });
   };
 
   const resetear = () => { setOverrides({}); setTablaSimulada(null); };
@@ -59,19 +68,16 @@ export default function Simular() {
   if (!torneoActivo) return <p className={styles.msg}>Selecciona un torneo</p>;
 
   return (
-    <div className={est.wrap}>
-      <section className={est.section}>
-        <div className={est.secHead}>
-          <span className={est.secTitle}>Simulador de Tabla</span>
-          <span className={est.secSub}>Ingresa o modifica resultados hipoteticos para ver como quedaria la tabla</span>
-        </div>
+    <div className={prodeStyles.wrap}>
+      <section className={prodeStyles.section}>
 
-        <div className={fix.fechasScroll} style={{ marginTop: '10px' }}>
-          <div className={fix.fechasTrack}>
+
+        <div className={prodeStyles.fechasScroll} style={{ marginTop: '10px' }}>
+          <div className={prodeStyles.fechasTrack}>
             {fechas?.map(f => (
               <button
                 key={f.id}
-                className={`${fix.fechaPill} ${selectedFecha?.id === f.id ? fix.fechaActive : ''}`}
+                className={`${prodeStyles.fechaPill} ${selectedFecha?.id === f.id ? prodeStyles.fechaActive : ''}`}
                 onClick={() => setSelectedFecha(f)}
               >
                 F{f.numero}
@@ -80,7 +86,7 @@ export default function Simular() {
           </div>
         </div>
 
-        <p className={est.simInfo} style={{ marginTop: '8px' }}>
+        <p className={prodeStyles.msg} style={{ marginTop: '0px', textAlign: 'left', fontSize: '0.9rem', color: '#8b949e' }}>
           Podes cambiar resultados pasados o futuros. Completa los que quieras y presiona Simular.
         </p>
 
@@ -91,31 +97,52 @@ export default function Simular() {
         )}
 
         {!loadingPartidos && partidos && partidos.length > 0 && (
-          <div className={est.simuladorGrid}>
+          <div className={prodeStyles.partidosList}>
             {partidos.map(p => {
               const valLocal = overrides[p.id]?.local !== undefined ? overrides[p.id].local : (p.estado === 'finalizado' ? p.goles_local : "");
               const valVisita = overrides[p.id]?.visita !== undefined ? overrides[p.id].visita : (p.estado === 'finalizado' ? p.goles_visita : "");
               return (
-                <div key={p.id} className={est.simPartidoRow}>
-                  <span className={`${est.simEquipo} ${est.simEquipoLocal}`}>{p.local_nombre}</span>
-                  <input
-                    type="number"
-                    min="0" max="99"
-                    className={est.simInput}
-                    value={valLocal}
-                    onChange={e => handleChange(p.id, "local", e.target.value)}
-                    placeholder="-"
-                  />
-                  <span className={est.simSep}>-</span>
-                  <input
-                    type="number"
-                    min="0" max="99"
-                    className={est.simInput}
-                    value={valVisita}
-                    onChange={e => handleChange(p.id, "visita", e.target.value)}
-                    placeholder="-"
-                  />
-                  <span className={est.simEquipo}>{p.visita_nombre}</span>
+                <div key={p.id} className={prodeStyles.partidoCard}>
+                  {/* Equipo Local */}
+                  <div className={`${prodeStyles.equipo} ${prodeStyles.equipoLocal}`}>
+                    <span className={prodeStyles.equipoNombre}>{p.local_nombre}</span>
+                    {p.local_escudo
+                      ? <img src={p.local_escudo} alt="" className={prodeStyles.escudo} />
+                      : <span className={prodeStyles.escudoVacio} />
+                    }
+                  </div>
+
+                  {/* Marcador Central / Inputs */}
+                  <div className={prodeStyles.marcadorCol}>
+                    <div className={prodeStyles.inputGroup}>
+                      <input
+                        type="number"
+                        min="0" max="99"
+                        className={prodeStyles.inputGol}
+                        value={valLocal}
+                        onChange={e => handleChange(p, "local", e.target.value)}
+                        placeholder="-"
+                      />
+                      <span className={prodeStyles.golSep}>-</span>
+                      <input
+                        type="number"
+                        min="0" max="99"
+                        className={prodeStyles.inputGol}
+                        value={valVisita}
+                        onChange={e => handleChange(p, "visita", e.target.value)}
+                        placeholder="-"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Equipo Visita */}
+                  <div className={`${prodeStyles.equipo} ${prodeStyles.equipoVisita}`}>
+                    {p.visita_escudo
+                      ? <img src={p.visita_escudo} alt="" className={prodeStyles.escudo} />
+                      : <span className={prodeStyles.escudoVacio} />
+                    }
+                    <span className={prodeStyles.equipoNombre}>{p.visita_nombre}</span>
+                  </div>
                 </div>
               );
             })}
@@ -139,12 +166,12 @@ export default function Simular() {
 
         {tablaSimulada && (
           <div className={est.simResultados}>
-            <div className={est.secHead} style={{marginTop: "8px"}}>
+            <div className={est.secHead} style={{ marginTop: "8px" }}>
               <span className={est.secTitle}>Resultado de la Simulacion</span>
               <span className={est.secSub}>Tabla hipotetica considerando los resultados ingresados</span>
             </div>
             <div className={est.simTablaWrap}>
-              <table className={est.table} style={{width:"100%", borderCollapse:"collapse"}}>
+              <table className={est.table} style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr>
                     <th className={est.thPos}>#</th>
@@ -163,15 +190,20 @@ export default function Simular() {
                   {tablaSimulada.map((eq, idx) => (
                     <tr key={eq.equipo_id} className={est.row}>
                       <td className={`${est.tdPos} ${idx < 8 ? styles.posPlayoff : ""}`}>{eq.posicion}</td>
-                      <td style={{fontWeight:600, padding:"9px 10px"}}>{eq.nombre}</td>
-                      <td style={{textAlign:"center", fontWeight:800, color:"#d29922"}}>{eq.puntos}</td>
-                      <td style={{textAlign:"center"}}>{eq.pj}</td>
-                      <td style={{textAlign:"center"}}>{eq.pg}</td>
-                      <td style={{textAlign:"center"}}>{eq.pe}</td>
-                      <td style={{textAlign:"center"}}>{eq.pp}</td>
-                      <td style={{textAlign:"center"}}>{eq.gf}</td>
-                      <td style={{textAlign:"center"}}>{eq.gc}</td>
-                      <td style={{textAlign:"center", color: eq.dg >= 0 ? "#3fb950" : "#f85149", fontWeight:700}}>
+                      <td style={{ padding: "9px 10px" }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+                          {eq.escudo_url && <img src={eq.escudo_url} alt="" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />}
+                          <span>{eq.nombre}</span>
+                        </div>
+                      </td>
+                      <td style={{ textAlign: "center", fontWeight: 800, color: "#d29922" }}>{eq.puntos}</td>
+                      <td style={{ textAlign: "center" }}>{eq.pj}</td>
+                      <td style={{ textAlign: "center" }}>{eq.pg}</td>
+                      <td style={{ textAlign: "center" }}>{eq.pe}</td>
+                      <td style={{ textAlign: "center" }}>{eq.pp}</td>
+                      <td style={{ textAlign: "center" }}>{eq.gf}</td>
+                      <td style={{ textAlign: "center" }}>{eq.gc}</td>
+                      <td style={{ textAlign: "center", color: eq.dg >= 0 ? "#3fb950" : "#f85149", fontWeight: 700 }}>
                         {eq.dg >= 0 ? "+" : ""}{eq.dg}
                       </td>
                     </tr>

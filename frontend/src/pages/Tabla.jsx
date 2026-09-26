@@ -20,13 +20,7 @@ export default function Tabla() {
   return (
     <div className={styles.wrap}>
 
-      {/* Encabezado de sección */}
-      <div className={styles.secHead}>
-        <span className={styles.secTitle}>Tabla de posiciones</span>
-        <span className={styles.secSub}>
-          Desempate: puntos cara a cara · dif. goles · goles a favor
-        </span>
-      </div>
+
 
       {/* Tabla principal */}
       <div className={styles.tableOuter}>
