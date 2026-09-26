@@ -6,12 +6,19 @@ function getAuthHeader() {
 }
 
 async function request(path, options = {}) {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...getAuthHeader(),
+    ...options.headers,
+  };
+
+  // Si enviamos FormData, el navegador debe settear el Content-Type automáticamente con el boundary
+  if (options.body instanceof FormData) {
+    delete headers['Content-Type'];
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeader(),
-      ...options.headers,
-    },
+    headers,
     ...options,
   });
 
@@ -30,6 +37,14 @@ export const authApi = {
   registro: (body) => request('/auth/registro', { method: 'POST', body: JSON.stringify(body) }),
 };
 
+// ── USUARIOS ──────────────────────────────────────────
+export const usuariosApi = {
+  perfil: () => request('/usuarios/perfil'),
+  actualizarPerfil: (body) => request('/usuarios/perfil', { method: 'PUT', body: JSON.stringify(body) }),
+  cambiarPassword: (body) => request('/usuarios/perfil/password', { method: 'PUT', body: JSON.stringify(body) }),
+  subirAvatar: (formData) => request('/usuarios/perfil/avatar', { method: 'POST', body: formData }),
+};
+
 // ── EQUIPOS ───────────────────────────────────────────
 export const equiposApi = {
   listar: () => request('/equipos'),
@@ -45,6 +60,7 @@ export const equiposApi = {
 export const torneosApi = {
   listar: () => request('/torneos'),
   detalle: (id) => request(`/torneos/${id}`),
+  inicio: (id) => request(`/torneos/${id}/inicio`),
   tabla: (id) => request(`/torneos/${id}/tabla`),
   goleadores: (id) => request(`/torneos/${id}/goleadores`),
   expulsados: (id) => request(`/torneos/${id}/expulsados`),

@@ -16,6 +16,8 @@ import GolAGol from './pages/GolAGol';
 import Estadisticas from './pages/Estadisticas';
 import Sancionados from './pages/Sancionados';
 import Simular from './pages/Simular';
+import Perfil from './pages/Perfil';
+import Inicio from './pages/Inicio';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,13 +40,15 @@ export default function App() {
           {/* Rutas protegidas dentro del Layout */}
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
-              <Route path="/"            element={<Tabla />} />
+              <Route path="/"            element={<Inicio />} />
+              <Route path="/tabla"       element={<Tabla />} />
               <Route path="/prode"       element={<Prode />} />
               <Route path="/equipos"     element={<Equipos />} />
               <Route path="/fixture"     element={<Fixture />} />
               <Route path="/estadisticas" element={<Estadisticas />} />
               <Route path="/sancionados" element={<Sancionados />} />
               <Route path="/simular"     element={<Simular />} />
+              <Route path="/perfil"      element={<Perfil />} />
               <Route path="/admin"       element={<Admin />} />
             </Route>
 

@@ -74,7 +74,8 @@ router.post('/login', (req, res) => {
       usuario: user.usuario,
       email: user.email,
       rol: user.rol,
-      equipo_id: user.equipo_id
+      equipo_id: user.equipo_id,
+      avatar_url: user.avatar_url
     }
   });
 });

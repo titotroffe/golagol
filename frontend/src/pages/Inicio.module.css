@@ -1,0 +1,235 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.msg {
+  color: #8b949e;
+  text-align: center;
+  margin-top: 40px;
+  font-size: 1.1rem;
+}
+
+.noData {
+  color: #8b949e;
+  font-style: italic;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sectionTitle {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #e6edf3;
+  margin: 0;
+}
+
+.liveDot {
+  width: 10px;
+  height: 10px;
+  background: #f85149;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(248, 81, 73, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(248, 81, 73, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(248, 81, 73, 0); }
+}
+
+.partidosGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .partidosGrid {
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  }
+}
+
+.partidoCard {
+  background: #161b22;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.partidoCard:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.liveCard {
+  border-color: rgba(248, 81, 73, 0.3);
+  background: linear-gradient(to bottom, #161b22, rgba(248, 81, 73, 0.03));
+}
+
+.fechaBadge {
+  position: absolute;
+  top: -12px;
+  left: 20px;
+  background: #21262d;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #8b949e;
+}
+
+.equiposContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.equipo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 35%;
+  text-align: center;
+}
+
+.escudo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+.equipoNombre {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e6edf3;
+  line-height: 1.2;
+}
+
+.marcadorWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 30%;
+}
+
+.marcadorLive {
+  background: #0d1117;
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  color: #f85149;
+  font-size: 1.5rem;
+  font-weight: 800;
+  padding: 6px 16px;
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  box-shadow: 0 0 10px rgba(248, 81, 73, 0.1);
+}
+
+.horaBadge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 111, 235, 0.05);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(31, 111, 235, 0.2);
+  white-space: nowrap;
+}
+
+.dia {
+  font-size: 0.7rem;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.hora {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #58a6ff;
+}
+
+.canchaInfo {
+  font-size: 0.8rem;
+  color: #8b949e;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.btnVer {
+  display: block;
+  text-align: center;
+  background: rgba(248, 81, 73, 0.1);
+  color: #ff7b72;
+  border: 1px solid rgba(248, 81, 73, 0.3);
+  padding: 8px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btnVer:hover {
+  background: rgba(248, 81, 73, 0.2);
+  color: #fff;
+}
+
+.btnCampana {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: #8b949e;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: color 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+.btnCampana:hover {
+  color: #c9d1d9;
+  transform: scale(1.1);
+}
+
+.campanaActiva {
+  color: #8b949e;
+}

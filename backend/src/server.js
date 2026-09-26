@@ -51,6 +51,12 @@ wss.on('connection', (ws) => {
   });
 });
 
+const usuariosRoutes = require('./routes/usuarios');
+
+// Servir archivos estaticos para avatares
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+
 // ─────────────────────────────────────────
 // RUTAS API
 // ─────────────────────────────────────────
@@ -59,6 +65,7 @@ app.use('/api/equipos',  equiposRoutes);
 app.use('/api/torneos',  torneosRoutes);
 app.use('/api/partidos', partidosRoutes);
 app.use('/api/prode',    prodeRoutes);
+app.use('/api/usuarios', usuariosRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

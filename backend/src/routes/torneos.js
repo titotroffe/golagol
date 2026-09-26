@@ -75,6 +75,54 @@ router.get('/:id', (req, res) => {
 });
 
 // ─────────────────────────────────────────
+// GET /api/torneos/:id/inicio
+// ─────────────────────────────────────────
+router.get('/:id/inicio', (req, res) => {
+  const torneo_id = req.params.id;
+  
+  // Partidos en vivo
+  const enVivo = db.prepare(`
+    SELECT p.*,
+           el.nombre AS local_nombre, el.escudo_url AS local_escudo,
+           ev.nombre AS visita_nombre, ev.escudo_url AS visita_escudo,
+           f.numero AS fecha_numero
+    FROM partidos p
+    JOIN equipos el ON el.id = p.equipo_local_id
+    JOIN equipos ev ON ev.id = p.equipo_visita_id
+    JOIN fechas f ON f.id = p.fecha_id
+    WHERE f.torneo_id = ? AND p.estado = 'en_curso'
+  `).all(torneo_id);
+
+  // Próximos partidos: encontrar la fecha (jornada) más próxima que tenga partidos pendientes
+  const proximaFechaQuery = db.prepare(`
+    SELECT f.id as fecha_id
+    FROM partidos p
+    JOIN fechas f ON f.id = p.fecha_id
+    WHERE f.torneo_id = ? AND p.estado = 'pendiente'
+    ORDER BY f.numero ASC, p.fecha_hora ASC
+    LIMIT 1
+  `).get(torneo_id);
+
+  let proximos = [];
+  if (proximaFechaQuery) {
+    proximos = db.prepare(`
+      SELECT p.*,
+             el.nombre AS local_nombre, el.escudo_url AS local_escudo,
+             ev.nombre AS visita_nombre, ev.escudo_url AS visita_escudo,
+             f.numero AS fecha_numero
+      FROM partidos p
+      JOIN equipos el ON el.id = p.equipo_local_id
+      JOIN equipos ev ON ev.id = p.equipo_visita_id
+      JOIN fechas f ON f.id = p.fecha_id
+      WHERE f.id = ?
+      ORDER BY p.fecha_hora ASC
+    `).all(proximaFechaQuery.fecha_id);
+  }
+
+  res.json({ enVivo, proximos });
+});
+
+// ─────────────────────────────────────────
 // GET /api/torneos/:id/tabla
 // Tabla de posiciones con desempate completo:
 // 1. Puntos  2. Puntos entre sí  3. Dif. goles  4. Goles a favor

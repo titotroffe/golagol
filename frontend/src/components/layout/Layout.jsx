@@ -9,7 +9,8 @@ import Notificaciones from '../ui/Notificaciones';
 import styles from './Layout.module.css';
 
 const NAV_ITEMS = [
-  { to: '/',             label: 'Tabla',        end: true },
+  { to: '/',             label: 'Inicio',       end: true },
+  { to: '/tabla',        label: 'Tabla'                  },
   { to: '/fixture',      label: 'Fixture'                },
   { to: '/prode',        label: 'Prode'                  },
   { to: '/equipos',      label: 'Equipos'                },
@@ -70,7 +71,11 @@ export default function Layout() {
                   aria-label="Menú de usuario"
                 >
                   <span className={styles.userAvatar}>
-                    {usuario.nombre?.[0]}{usuario.apellido?.[0]}
+                    {usuario.avatar_url ? (
+                      <img src={`http://localhost:3001${usuario.avatar_url}`} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                    ) : (
+                      usuario.nombre?.[0] + usuario.apellido?.[0]
+                    )}
                   </span>
                   <span className={styles.userName}>{usuario.nombre}</span>
                   <span className={styles.chevron}>{userOpen ? '▲' : '▼'}</span>
@@ -80,10 +85,27 @@ export default function Layout() {
                   <>
                     <div className={styles.overlay} onClick={() => setUserOpen(false)} />
                     <div className={styles.dropdown}>
-                      <div className={styles.dropInfo}>
-                        <strong>{usuario.nombre} {usuario.apellido}</strong>
-                        <small>@{usuario.usuario} · {usuario.rol}</small>
+                      <div className={styles.dropInfo} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', background: '#21262d', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '1rem', fontWeight: 'bold' }}>
+                          {usuario.avatar_url ? (
+                            <img src={`http://localhost:3001${usuario.avatar_url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            usuario.nombre?.[0] + usuario.apellido?.[0]
+                          )}
+                        </div>
+                        <div>
+                          <strong>{usuario.nombre} {usuario.apellido}</strong>
+                          <br />
+                          <small>@{usuario.usuario} · {usuario.rol}</small>
+                        </div>
                       </div>
+                      <button
+                        className={styles.dropLink}
+                        onClick={() => { setUserOpen(false); navigate('/perfil'); }}
+                        style={{ background: 'transparent', border: 'none', color: '#c9d1d9', padding: '10px 14px', textAlign: 'left', cursor: 'pointer', fontSize: '0.85rem', width: '100%', display: 'block' }}
+                      >
+                        Mi Perfil
+                      </button>
                       <button
                         className={styles.dropLogout}
                         onClick={() => { logout(); navigate('/login'); }}
