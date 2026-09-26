@@ -36,7 +36,10 @@
   font-size: 0.8rem;
   font-weight: 600;
 }
-.btnBack:hover { color: white; }
+
+.btnBack:hover {
+  color: white;
+}
 
 .scoreBoard {
   display: flex;
@@ -51,8 +54,14 @@
   text-transform: uppercase;
   width: 150px;
 }
-.scoreTeam:first-child { text-align: right; }
-.scoreTeam:last-child { text-align: left; }
+
+.scoreTeam:first-child {
+  text-align: right;
+}
+
+.scoreTeam:last-child {
+  text-align: left;
+}
 
 .scoreCenter {
   display: flex;
@@ -65,7 +74,7 @@
   font-size: 2.5rem;
   font-weight: 900;
   color: #3fb950;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   padding: 4px 16px;
   border-radius: 8px;
   letter-spacing: 2px;
@@ -76,10 +85,10 @@
   font-weight: 800;
   color: #c9d1d9;
   font-family: monospace;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.6);
   padding: 4px 12px;
   border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -110,7 +119,7 @@
 .equipoCol {
   flex: 1;
   background: rgba(22, 27, 34, 0.6);
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 12px;
   padding: 16px;
   display: flex;
@@ -126,7 +135,7 @@
   margin: 0;
   text-align: center;
   padding-bottom: 12px;
-  border-bottom: 2px solid rgba(255,255,255,0.1);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .section {
@@ -167,14 +176,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid transparent;
 }
+
 .jItem:hover {
-  background: rgba(255,255,255,0.08);
-  border-color: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .jInhabilitado {
@@ -196,7 +206,7 @@
 }
 
 .dorsal {
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
   color: #ffffff;
   font-size: 0.85rem;
   font-weight: 900;
@@ -214,12 +224,18 @@
   color: white;
 }
 
-.tagAmarilla { font-size: 0.9rem; }
-.tagRoja { font-size: 0.9rem; }
-.tagSub { 
-  font-size: 0.75rem; 
-  color: #3fb950; 
-  font-weight: 800; 
+.tagAmarilla {
+  font-size: 0.9rem;
+}
+
+.tagRoja {
+  font-size: 0.9rem;
+}
+
+.tagSub {
+  font-size: 0.75rem;
+  color: #3fb950;
+  font-weight: 800;
   background: rgba(63, 185, 80, 0.15);
   padding: 2px 6px;
   border-radius: 4px;
@@ -232,7 +248,7 @@
   justify-content: center;
   margin-bottom: 16px;
   padding: 8px;
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 8px;
 }
 
@@ -247,6 +263,7 @@
   font-weight: 700;
   transition: all 0.2s;
 }
+
 .btnTeamAction:hover {
   background: rgba(255, 255, 255, 0.2);
 }
@@ -265,6 +282,7 @@
   align-items: center;
   margin-bottom: 10px;
 }
+
 .actionFormHeader h4 {
   margin: 0;
   color: #3fb950;
@@ -287,9 +305,11 @@
   cursor: pointer;
   transition: 0.2s;
 }
+
 .btnConfirmAction:hover:not(:disabled) {
   background: #2ea043;
 }
+
 .btnConfirmAction:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -303,9 +323,11 @@
   font-size: 1.2rem;
   padding: 0 4px;
 }
+
 .btnRemoveTiny:hover:not(:disabled) {
   color: #f85149;
 }
+
 .btnRemoveTiny:disabled {
   opacity: 0;
 }
@@ -320,8 +342,15 @@
   font-size: 1rem;
   font-weight: 900;
 }
-.btnRemove:hover { background: rgba(248, 81, 73, 0.3); }
-.btnRemove:disabled { opacity: 0.2; cursor: not-allowed; }
+
+.btnRemove:hover {
+  background: rgba(248, 81, 73, 0.3);
+}
+
+.btnRemove:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+}
 
 .cambioSelector {
   display: flex;
@@ -330,8 +359,9 @@
   flex: 1;
   justify-content: flex-end;
 }
+
 .cambioSelector select {
-  background: rgba(0,0,0,0.8);
+  background: rgba(0, 0, 0, 0.8);
   border: 1px solid #3fb950;
   color: white;
   padding: 6px;
@@ -346,8 +376,8 @@
 
 .selectJ {
   width: 100%;
-  background: rgba(0,0,0,0.6);
-  border: 1px dashed rgba(255,255,255,0.3);
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px dashed rgba(255, 255, 255, 0.3);
   color: #c9d1d9;
   padding: 10px;
   border-radius: 8px;
@@ -356,12 +386,17 @@
   outline: none;
   cursor: pointer;
 }
-.selectJ:focus { border-color: #3fb950; color: white; background: black; }
+
+.selectJ:focus {
+  border-color: #3fb950;
+  color: white;
+  background: black;
+}
 
 /* FEED CENTRAL */
 .feedCol {
   width: 320px;
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(35, 134, 54, 0.3);
   border-radius: 12px;
   padding: 16px;
@@ -376,7 +411,7 @@
   justify-content: center;
   padding-bottom: 16px;
   margin-bottom: 16px;
-  border-bottom: 2px solid rgba(255,255,255,0.05);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.05);
 }
 
 .btnMatchState {
@@ -392,6 +427,7 @@
   flex: 1;
   min-width: 100px;
 }
+
 .btnMatchState:hover {
   background: rgba(88, 166, 255, 0.25);
   transform: translateY(-1px);
@@ -414,7 +450,7 @@
 }
 
 .evCard {
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   padding: 10px 14px;
   border-radius: 8px;
   display: flex;
@@ -441,6 +477,7 @@
   font-size: 0.8rem;
   transition: all 0.2s;
 }
+
 .btnDeleteEvent:hover {
   background: rgba(248, 81, 73, 0.3);
 }
@@ -474,6 +511,7 @@
   .colsWrapper {
     flex-direction: column;
   }
+
   .feedCol {
     width: 100%;
     height: 300px;
