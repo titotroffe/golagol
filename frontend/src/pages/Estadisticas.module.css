@@ -1,0 +1,292 @@
+﻿.wrap { display: flex; flex-direction: column; gap: 24px; }
+
+.section { display: flex; flex-direction: column; gap: 12px; }
+
+.secHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #238636;
+}
+
+.secTitle {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #f0f6fc;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.secSub { font-size: 0.7rem; color: #6e7681; }
+
+.tableOuter {
+  width: 100%;
+  background: #161b22;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.87rem;
+  table-layout: auto;
+}
+
+.table thead tr { background: #0d1117; }
+
+.table th {
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #6e7681;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  white-space: nowrap;
+}
+
+.row {
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: background 0.1s;
+}
+.row:last-child { border-bottom: none; }
+.row:hover { background: rgba(255,255,255,0.03); }
+
+.table td {
+  padding: 10px 10px;
+  color: #e6edf3;
+}
+
+/* Columnas */
+.thPos   { width: 36px; text-align: center; }
+.thNum   { width: 60px; text-align: center; }
+.thJugador { min-width: 150px; }
+.thEquipo  { min-width: 120px; }
+.thMotivo  { min-width: 100px; }
+
+.tdPos {
+  font-weight: 800;
+  font-size: 0.8rem;
+  text-align: center;
+  color: #6e7681;
+}
+.top1 { color: #d29922; }
+.top2 { color: #8b949e; }
+.top3 { color: #a0714f; }
+
+.tdJugador {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.nombreJugador { font-weight: 600; }
+.camiseta { font-size: 0.72rem; color: #6e7681; }
+
+.tdEquipo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.escudo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.tdGoles { text-align: center; }
+
+.golesTop {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #d29922;
+}
+
+.golesNum {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e6edf3;
+}
+
+.rojasBadge {
+  display: inline-block;
+  background: rgba(248, 81, 73, 0.2);
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  color: #f85149;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.tdMotivo {
+  font-size: 0.8rem;
+  color: #8b949e;
+}
+
+/* Simular */
+.simuladorGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.simPartidoRow {
+  display: grid;
+  grid-template-columns: 1fr 50px 10px 50px 1fr;
+  gap: 6px;
+  align-items: center;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.simEquipo {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #c9d1d9;
+}
+
+.simEquipoLocal { text-align: right; }
+
+.simInput {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #e6edf3;
+  border-radius: 6px;
+  padding: 6px 4px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  width: 100%;
+  outline: none;
+}
+
+.simInput:focus { border-color: #58a6ff; }
+
+.simSep {
+  text-align: center;
+  color: #6e7681;
+  font-weight: 700;
+}
+
+.simResultados {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.simTablaWrap {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.btnSimular {
+  background: linear-gradient(135deg, #1f6feb, #388bfd);
+  border: none;
+  color: white;
+  border-radius: 8px;
+  padding: 11px 22px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  align-self: flex-start;
+}
+
+.btnSimular:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, #388bfd, #58a6ff);
+}
+
+.btnSimular:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btnReset {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #8b949e;
+  border-radius: 8px;
+  padding: 11px 18px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btnReset:hover { border-color: #f85149; color: #f85149; }
+
+.btnRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.simInfo {
+  font-size: 0.78rem;
+  color: #6e7681;
+  font-style: italic;
+  margin-top: -4px;
+}
+
+/* Notificaciones */
+.notifContainer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.notif {
+  background: #161b22;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-left: 4px solid #238636;
+  border-radius: 8px;
+  padding: 12px 16px;
+  min-width: 240px;
+  max-width: 320px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  animation: slideIn 0.3s ease;
+  pointer-events: all;
+}
+
+.notifGol { border-left-color: #d29922; }
+.notifRoja { border-left-color: #f85149; }
+
+@keyframes slideIn {
+  from { transform: translateX(40px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+.notifTitle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #f0f6fc;
+  margin-bottom: 2px;
+}
+
+.notifBody {
+  font-size: 0.75rem;
+  color: #8b949e;
+}
+
+@media (max-width: 600px) {
+  .simPartidoRow {
+    grid-template-columns: 1fr 42px 8px 42px 1fr;
+    padding: 8px;
+    gap: 4px;
+  }
+  .simEquipo { font-size: 0.75rem; }
+}

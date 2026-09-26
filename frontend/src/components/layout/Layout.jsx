@@ -5,6 +5,7 @@ import { useWebSocket } from '../../hooks/useWebSocket';
 import { torneosApi } from '../../api';
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import Notificaciones from '../ui/Notificaciones';
 import styles from './Layout.module.css';
 
 const NAV_ITEMS = [
@@ -150,6 +151,9 @@ export default function Layout() {
       <main className={styles.main}>
         <Outlet />
       </main>
+
+      {/* Notificaciones en tiempo real */}
+      <Notificaciones />
     </div>
   );
 }
