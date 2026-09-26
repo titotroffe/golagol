@@ -9,6 +9,7 @@ const equiposRoutes = require('./routes/equipos');
 const torneosRoutes = require('./routes/torneos');
 const partidosRoutes = require('./routes/partidos');
 const prodeRoutes   = require('./routes/prode');
+const jugadoresRoutes = require('./routes/jugadores');
 
 const app = express();
 const server = http.createServer(app);
@@ -68,6 +69,7 @@ app.use('/api/partidos', partidosRoutes);
 app.use('/api/prode',    prodeRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/sanciones', sancionesRoutes);
+app.use('/api/jugadores', jugadoresRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

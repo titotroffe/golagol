@@ -1,8 +1,76 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { equiposApi } from '../api';
+import { equiposApi, jugadoresApi } from '../api';
 import { useAuthStore } from '../store';
 import styles from './Equipos.module.css';
+
+function JugadorRow({ j, esAdmin, equipoId }) {
+  const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    nombre: j.nombre,
+    apellido: j.apellido || '',
+    dni: j.dni || '',
+    fecha_nacimiento: j.fecha_nacimiento || ''
+  });
+
+  const editarMut = useMutation({
+    mutationFn: (body) => jugadoresApi.editar(body.id, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['plantel', equipoId]);
+      setIsEditing(false);
+    }
+  });
+
+  if (isEditing) {
+    return (
+      <li className={styles.jugadorItem} style={{ flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '10px' }}>
+        <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+          <input value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} placeholder="Nombre" style={{flex: 1, background: '#0d1117', color: 'white', border: '1px solid #30363d', padding: '6px', borderRadius: '4px'}} />
+          <input value={formData.apellido} onChange={e => setFormData({...formData, apellido: e.target.value})} placeholder="Apellido" style={{flex: 1, background: '#0d1117', color: 'white', border: '1px solid #30363d', padding: '6px', borderRadius: '4px'}} />
+        </div>
+        <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+          <input value={formData.dni} onChange={e => setFormData({...formData, dni: e.target.value})} placeholder="DNI" style={{flex: 1, background: '#0d1117', color: 'white', border: '1px solid #30363d', padding: '6px', borderRadius: '4px'}} />
+          <input type="date" value={formData.fecha_nacimiento} onChange={e => setFormData({...formData, fecha_nacimiento: e.target.value})} style={{flex: 1, background: '#0d1117', color: 'white', border: '1px solid #30363d', padding: '6px', borderRadius: '4px'}} />
+        </div>
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', width: '100%', marginTop: '4px' }}>
+          <button onClick={() => setIsEditing(false)} style={{ background: 'transparent', color: '#8b949e', border: '1px solid #30363d', borderRadius: '4px', padding: '4px 12px', cursor: 'pointer' }}>Cancelar</button>
+          <button onClick={() => editarMut.mutate({ id: j.id, ...formData })} disabled={editarMut.isPending} style={{ background: '#1f6feb', color: 'white', border: 'none', borderRadius: '4px', padding: '4px 12px', cursor: 'pointer' }}>
+            {editarMut.isPending ? '...' : 'Guardar'}
+          </button>
+        </div>
+      </li>
+    );
+  }
+
+  // Parsear fecha para mostrar sin desfase horario
+  let fechaFormat = '';
+  if (j.fecha_nacimiento) {
+    const [y, m, d] = j.fecha_nacimiento.split('-');
+    fechaFormat = `${d}/${m}/${y}`;
+  }
+
+  return (
+    <li className={styles.jugadorItem}>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <span className={styles.jName}>{j.apellido ? `${j.nombre} ${j.apellido}` : j.nombre}</span>
+        {(j.dni || j.fecha_nacimiento) && (
+          <span style={{ fontSize: '0.75rem', color: '#8b949e', marginTop: '2px' }}>
+            {j.dni ? `DNI: ${j.dni}` : ''}
+            {j.dni && j.fecha_nacimiento ? ' | ' : ''}
+            {j.fecha_nacimiento ? `Nac: ${fechaFormat}` : ''}
+          </span>
+        )}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {j.dorsal && <span className={styles.jDorsal}>{j.dorsal}</span>}
+        {esAdmin && (
+          <button onClick={() => setIsEditing(true)} title="Editar Jugador" style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.1rem', opacity: 0.7 }}>✏️</button>
+        )}
+      </div>
+    </li>
+  );
+}
 
 function PlantelTeam({ equipo }) {
   const queryClient = useQueryClient();
@@ -73,10 +141,7 @@ function PlantelTeam({ equipo }) {
             <ul className={styles.jugadoresList}>
               {plantel?.length === 0 && <p className={styles.msg}>No hay jugadores cargados.</p>}
               {plantel?.map(j => (
-                <li key={j.id} className={styles.jugadorItem}>
-                  <span className={styles.jName}>{j.apellido ? `${j.nombre} ${j.apellido}` : j.nombre}</span>
-                  {j.dorsal && <span className={styles.jDorsal}>{j.dorsal}</span>}
-                </li>
+                <JugadorRow key={j.id} j={j} esAdmin={esAdmin} equipoId={equipo.id} />
               ))}
             </ul>
           )}

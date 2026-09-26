@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { torneosApi } from '../api';
+import { torneosApi, jugadoresApi } from '../api';
 import { useTorneoStore } from '../store';
 import { Link } from 'react-router-dom';
 import styles from './Inicio.module.css';
@@ -23,6 +23,11 @@ export default function Inicio() {
     queryFn: () => torneosApi.inicio(torneoActivo.id),
     enabled: !!torneoActivo,
     refetchInterval: 30000 // Refrescar cada 30 segundos
+  });
+
+  const { data: cumpleaneros = [] } = useQuery({
+    queryKey: ['cumpleaneros'],
+    queryFn: jugadoresApi.cumpleaneros,
   });
 
   if (!torneoActivo) return <p className={styles.msg}>Seleccioná un torneo.</p>;
@@ -126,6 +131,32 @@ export default function Inicio() {
           <p className={styles.noData}>No hay partidos programados próximamente.</p>
         )}
       </section>
+
+      {/* SECCIÓN CUMPLEAÑOS */}
+      {cumpleaneros && cumpleaneros.length > 0 && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>🎂 ¡Feliz Cumpleaños!</h2>
+          <div className={styles.sancionadosList}>
+            {cumpleaneros.map(c => (
+              <div key={c.id} className={styles.sancionadoCard} style={{ borderColor: 'rgba(210, 153, 34, 0.4)' }}>
+                <div className={styles.sancionadoInfo}>
+                  <img src={c.escudo_url} alt="" className={styles.sancionadoEscudo} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <strong className={styles.sancionadoNombre} style={{ color: '#d29922' }}>{c.nombre} {c.apellido}</strong>
+                      <span className={styles.sancionadoEquipo}>({c.equipo_nombre})</span>
+                    </div>
+                    <span style={{ fontSize: '0.8rem', color: '#8b949e' }}>De parte de toda la liga.</span>
+                  </div>
+                </div>
+                <div className={styles.sancionadoEstado}>
+                  <span className={styles.badgeVarias} style={{ background: 'rgba(210, 153, 34, 0.1)', color: '#d29922' }}>🎉 Felicidades</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* SECCIÓN SANCIONADOS */}
       {sancionados && sancionados.length > 0 && (

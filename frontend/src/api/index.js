@@ -112,3 +112,8 @@ export const sancionesApi = {
   editar: (id, body) => request(`/sanciones/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   eliminar: (id) => request(`/sanciones/${id}`, { method: 'DELETE' }),
 };
+// ── JUGADORES ─────────────────────────────────────────
+export const jugadoresApi = {
+  cumpleaneros: () => request('/jugadores/cumpleaneros'),
+  editar: (id, body) => request(`/jugadores/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+};
