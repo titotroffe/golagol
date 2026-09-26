@@ -30,7 +30,7 @@ function JugadorRow({ j, esAdmin, equipoId }) {
           <input value={formData.apellido} onChange={e => setFormData({...formData, apellido: e.target.value})} placeholder="Apellido" style={{flex: 1, background: '#0d1117', color: 'white', border: '1px solid #30363d', padding: '6px', borderRadius: '4px'}} />
         </div>
         <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-          <input value={formData.dni} onChange={e => setFormData({...formData, dni: e.target.value})} placeholder="DNI" style={{flex: 1, background: '#0d1117', color: 'white', border: '1px solid #30363d', padding: '6px', borderRadius: '4px'}} />
+          <input type="number" value={formData.dni} onChange={e => setFormData({...formData, dni: e.target.value})} placeholder="DNI" style={{flex: 1, background: '#0d1117', color: 'white', border: '1px solid #30363d', padding: '6px', borderRadius: '4px'}} />
           <input type="date" value={formData.fecha_nacimiento} onChange={e => setFormData({...formData, fecha_nacimiento: e.target.value})} style={{flex: 1, background: '#0d1117', color: 'white', border: '1px solid #30363d', padding: '6px', borderRadius: '4px'}} />
         </div>
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', width: '100%', marginTop: '4px' }}>
