@@ -13,11 +13,15 @@ function PartidoAdminCard({ partido }) {
   const [showEventos, setShowEventos] = useState(false);
   const [nuevoGolLocal, setNuevoGolLocal] = useState('');
   const [nuevoGolVisita, setNuevoGolVisita] = useState('');
+  const [porEscritorio, setPorEscritorio] = useState(partido.por_escritorio === 1 || partido.ganador_escritorio != null);
+  const [ganadorEscritorio, setGanadorEscritorio] = useState(partido.ganador_escritorio || 'local');
 
   // Sincronizar estado local
   useEffect(() => {
     if (partido.goles_local != null) setLocalStr(partido.goles_local.toString());
     if (partido.goles_visita != null) setVisitaStr(partido.goles_visita.toString());
+    setPorEscritorio(partido.por_escritorio === 1 || partido.ganador_escritorio != null);
+    setGanadorEscritorio(partido.ganador_escritorio || 'local');
   }, [partido]);
 
   const handleLocalChange = (e) => {
@@ -46,6 +50,12 @@ function PartidoAdminCard({ partido }) {
     enabled: showEventos,
   });
 
+  const { data: detalle } = useQuery({
+    queryKey: ['partidoDetalle', partido.id],
+    queryFn: () => partidosApi.detalle(partido.id),
+    enabled: showEventos,
+  });
+
   const cargarResultadoMut = useMutation({
     mutationFn: (body) => partidosApi.cargarResultado(partido.id, body),
     onSuccess: () => {
@@ -62,18 +72,28 @@ function PartidoAdminCard({ partido }) {
     mutationFn: (body) => partidosApi.registrarEvento(partido.id, body),
     onSuccess: () => {
       queryClient.invalidateQueries(['partidosAdmin', partido.fecha_id]);
+      queryClient.invalidateQueries(['partidoDetalle', partido.id]);
       setNuevoGolLocal('');
       setNuevoGolVisita('');
     },
     onError: (err) => alert('Error al agregar gol: ' + err.message)
   });
 
-  const handleAddGol = (isLocal) => {
+  const eliminarEventoMut = useMutation({
+    mutationFn: (eventoId) => partidosApi.eliminarEvento(partido.id, eventoId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['partidosAdmin', partido.fecha_id]);
+      queryClient.invalidateQueries(['partidoDetalle', partido.id]);
+    },
+    onError: (err) => alert('Error al eliminar evento: ' + err.message)
+  });
+
+  const handleAddEvento = (isLocal, tipo) => {
     const nombre = isLocal ? nuevoGolLocal : nuevoGolVisita;
     if (!nombre.trim()) return;
 
     agregarEventoMut.mutate({
-      tipo: 'GOL',
+      tipo,
       equipo_id: isLocal ? partido.equipo_local_id : partido.equipo_visita_id,
       jugador_nombre: nombre,
     });
@@ -87,7 +107,9 @@ function PartidoAdminCard({ partido }) {
     if (window.confirm(`¿Confirmar finalización de partido con resultado ${partido.local_nombre} ${localStr} - ${visitaStr} ${partido.visita_nombre}? Se calcularán los puntos del Prode para todos los usuarios y NO se puede deshacer.`)) {
       cargarResultadoMut.mutate({
         goles_local: parseInt(localStr, 10),
-        goles_visita: parseInt(visitaStr, 10)
+        goles_visita: parseInt(visitaStr, 10),
+        por_escritorio: porEscritorio,
+        ganador_escritorio: porEscritorio ? ganadorEscritorio : null
       });
     }
   };
@@ -139,6 +161,30 @@ function PartidoAdminCard({ partido }) {
           <span className={styles.finBadge}>Finalizado</span>
         )}
 
+        <div style={{marginTop: '10px', fontSize: '0.85rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px'}}>
+          <div style={{display: 'flex', gap: '6px', alignItems: 'center'}}>
+            <input 
+              type="checkbox" 
+              id={`escritorio_${partido.id}`}
+              checked={porEscritorio}
+              onChange={(e) => setPorEscritorio(e.target.checked)}
+              disabled={cargarResultadoMut.isPending}
+            />
+            <label htmlFor={`escritorio_${partido.id}`} style={{cursor: 'pointer'}}>Fallo por escritorio</label>
+          </div>
+          {porEscritorio && (
+            <select
+              value={ganadorEscritorio}
+              onChange={(e) => setGanadorEscritorio(e.target.value)}
+              disabled={cargarResultadoMut.isPending}
+              style={{padding: '4px', borderRadius: '4px', background: '#333', color: 'white', border: '1px solid #555', width: '100%', maxWidth: '200px'}}
+            >
+              <option value="local">Puntos para Local</option>
+              <option value="visita">Puntos para Visita</option>
+            </select>
+          )}
+        </div>
+
         <button 
           className={styles.btnEventosToggle} 
           onClick={() => setShowEventos(!showEventos)}
@@ -168,8 +214,22 @@ function PartidoAdminCard({ partido }) {
       {showEventos && (
         <div className={styles.eventosPanel}>
           <div className={styles.evCol}>
-            <span className={styles.evTitle}>Goles {partido.local_nombre}</span>
-            <div className={styles.evInputRow}>
+            <span className={styles.evTitle}>Eventos {partido.local_nombre}</span>
+            <ul style={{listStyle: 'none', padding: 0, margin: '0 0 10px 0', fontSize: '0.85rem'}}>
+              {detalle?.eventos?.filter(ev => ev.equipo_id === partido.equipo_local_id && (ev.tipo.includes('GOL') || ev.tipo === 'ROJA')).map(ev => (
+                <li key={ev.id} style={{display: 'flex', justifyContent: 'space-between', marginBottom: '4px'}}>
+                  <span>{ev.jugador_nombre} {ev.jugador_apellido} {ev.tipo === 'AUTOGOL' ? '(E.C.)' : ev.tipo === 'ROJA' ? '(🔴)' : ''}</span>
+                  <button 
+                    onClick={() => eliminarEventoMut.mutate(ev.id)}
+                    style={{background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '0 4px'}}
+                    disabled={eliminarEventoMut.isPending}
+                  >
+                    X
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '6px'}}>
               <input 
                 type="text" 
                 placeholder="Seleccionar o crear jugador" 
@@ -178,25 +238,58 @@ function PartidoAdminCard({ partido }) {
                 onChange={(e) => setNuevoGolLocal(e.target.value)}
                 className={styles.evInput}
                 disabled={agregarEventoMut.isPending}
+                style={{width: '100%', boxSizing: 'border-box'}}
               />
               <datalist id={`list-loc-${partido.id}`}>
                 {plantelLocal?.map(j => (
                   <option key={j.id} value={`${j.nombre} ${j.apellido}`} />
                 ))}
               </datalist>
-              <button 
-                onClick={() => handleAddGol(true)} 
-                className={styles.evBtn}
-                disabled={agregarEventoMut.isPending || !nuevoGolLocal.trim()}
-              >
-                + Gol
-              </button>
+              <div style={{display: 'flex', gap: '4px', flexWrap: 'wrap'}}>
+                <button 
+                  onClick={() => handleAddEvento(true, 'GOL')} 
+                  className={styles.evBtn}
+                  disabled={agregarEventoMut.isPending || !nuevoGolLocal.trim()}
+                >
+                  + Gol
+                </button>
+                <button 
+                  onClick={() => handleAddEvento(true, 'AUTOGOL')} 
+                  className={styles.evBtn}
+                  style={{background: '#d29922', color: '#000'}}
+                  disabled={agregarEventoMut.isPending || !nuevoGolLocal.trim()}
+                >
+                  + E.C.
+                </button>
+                <button 
+                  onClick={() => handleAddEvento(true, 'ROJA')} 
+                  className={styles.evBtn}
+                  style={{background: '#ff4444', borderColor: '#ff4444'}}
+                  disabled={agregarEventoMut.isPending || !nuevoGolLocal.trim()}
+                >
+                  + Roja
+                </button>
+              </div>
             </div>
           </div>
           
           <div className={styles.evCol}>
-            <span className={styles.evTitle}>Goles {partido.visita_nombre}</span>
-            <div className={styles.evInputRow}>
+            <span className={styles.evTitle}>Eventos {partido.visita_nombre}</span>
+            <ul style={{listStyle: 'none', padding: 0, margin: '0 0 10px 0', fontSize: '0.85rem'}}>
+              {detalle?.eventos?.filter(ev => ev.equipo_id === partido.equipo_visita_id && (ev.tipo.includes('GOL') || ev.tipo === 'ROJA')).map(ev => (
+                <li key={ev.id} style={{display: 'flex', justifyContent: 'space-between', marginBottom: '4px'}}>
+                  <span>{ev.jugador_nombre} {ev.jugador_apellido} {ev.tipo === 'AUTOGOL' ? '(E.C.)' : ev.tipo === 'ROJA' ? '(🔴)' : ''}</span>
+                  <button 
+                    onClick={() => eliminarEventoMut.mutate(ev.id)}
+                    style={{background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '0 4px'}}
+                    disabled={eliminarEventoMut.isPending}
+                  >
+                    X
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '6px'}}>
               <input 
                 type="text" 
                 placeholder="Seleccionar o crear jugador"
@@ -205,19 +298,38 @@ function PartidoAdminCard({ partido }) {
                 onChange={(e) => setNuevoGolVisita(e.target.value)}
                 className={styles.evInput}
                 disabled={agregarEventoMut.isPending}
+                style={{width: '100%', boxSizing: 'border-box'}}
               />
               <datalist id={`list-vis-${partido.id}`}>
                 {plantelVisita?.map(j => (
                   <option key={j.id} value={`${j.nombre} ${j.apellido}`} />
                 ))}
               </datalist>
-              <button 
-                onClick={() => handleAddGol(false)} 
-                className={styles.evBtn}
-                disabled={agregarEventoMut.isPending || !nuevoGolVisita.trim()}
-              >
-                + Gol
-              </button>
+              <div style={{display: 'flex', gap: '4px', flexWrap: 'wrap'}}>
+                <button 
+                  onClick={() => handleAddEvento(false, 'GOL')} 
+                  className={styles.evBtn}
+                  disabled={agregarEventoMut.isPending || !nuevoGolVisita.trim()}
+                >
+                  + Gol
+                </button>
+                <button 
+                  onClick={() => handleAddEvento(false, 'AUTOGOL')} 
+                  className={styles.evBtn}
+                  style={{background: '#d29922', color: '#000'}}
+                  disabled={agregarEventoMut.isPending || !nuevoGolVisita.trim()}
+                >
+                  + E.C.
+                </button>
+                <button 
+                  onClick={() => handleAddEvento(false, 'ROJA')} 
+                  className={styles.evBtn}
+                  style={{background: '#ff4444', borderColor: '#ff4444'}}
+                  disabled={agregarEventoMut.isPending || !nuevoGolVisita.trim()}
+                >
+                  + Roja
+                </button>
+              </div>
             </div>
           </div>
         </div>

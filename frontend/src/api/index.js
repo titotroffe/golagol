@@ -66,6 +66,8 @@ export const partidosApi = {
     request(`/partidos/${id}/evento/${eventoId}`, { method: 'DELETE' }),
   cargarResultado: (id, body) =>
     request(`/partidos/${id}/resultado`, { method: 'PUT', body: JSON.stringify(body) }),
+  marcarEscritorio: (id, ganador_escritorio) =>
+    request(`/partidos/${id}/escritorio`, { method: 'POST', body: JSON.stringify({ ganador_escritorio }) }),
   alineaciones: (id) => request(`/partidos/${id}/alineaciones`),
   agregarAlineacion: (id, body) =>
     request(`/partidos/${id}/alineaciones`, { method: 'POST', body: JSON.stringify(body) }),

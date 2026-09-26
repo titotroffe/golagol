@@ -25,15 +25,21 @@ function ordenarTabla(equipos, partidos) {
 
       partidos.forEach(p => {
         if (idsGrupo.includes(p.equipo_local_id) && idsGrupo.includes(p.equipo_visita_id)) {
-          const gl = p.goles_local;
-          const gv = p.goles_visita;
-          if (gl > gv) {
+          if (p.ganador_escritorio === 'local') {
             miniTablaPts[p.equipo_local_id] += 3;
-          } else if (gl < gv) {
+          } else if (p.ganador_escritorio === 'visita') {
             miniTablaPts[p.equipo_visita_id] += 3;
-          } else if (gl === gv) {
-            miniTablaPts[p.equipo_local_id] += 1;
-            miniTablaPts[p.equipo_visita_id] += 1;
+          } else {
+            const gl = p.goles_local;
+            const gv = p.goles_visita;
+            if (gl > gv) {
+              miniTablaPts[p.equipo_local_id] += 3;
+            } else if (gl < gv) {
+              miniTablaPts[p.equipo_visita_id] += 3;
+            } else if (gl === gv) {
+              miniTablaPts[p.equipo_local_id] += 1;
+              miniTablaPts[p.equipo_visita_id] += 1;
+            }
           }
         }
       });
@@ -84,13 +90,17 @@ router.get('/:id/tabla', (req, res) => {
       e.escudo_url,
       COUNT(p.id) + MAX(COALESCE(eb.pj, 0)) AS pj,
       COALESCE(SUM(CASE
-        WHEN (p.equipo_local_id = e.id AND p.goles_local > p.goles_visita) OR
-             (p.equipo_visita_id = e.id AND p.goles_visita > p.goles_local) THEN 1 ELSE 0
+        WHEN p.ganador_escritorio = 'local' AND p.equipo_local_id = e.id THEN 1
+        WHEN p.ganador_escritorio = 'visita' AND p.equipo_visita_id = e.id THEN 1
+        WHEN p.ganador_escritorio IS NULL AND ((p.equipo_local_id = e.id AND p.goles_local > p.goles_visita) OR
+             (p.equipo_visita_id = e.id AND p.goles_visita > p.goles_local)) THEN 1 ELSE 0
       END), 0) + MAX(COALESCE(eb.pg, 0)) AS pg,
-      COALESCE(SUM(CASE WHEN p.goles_local = p.goles_visita THEN 1 ELSE 0 END), 0) + MAX(COALESCE(eb.pe, 0)) AS pe,
+      COALESCE(SUM(CASE WHEN p.ganador_escritorio IS NULL AND p.goles_local = p.goles_visita THEN 1 ELSE 0 END), 0) + MAX(COALESCE(eb.pe, 0)) AS pe,
       COALESCE(SUM(CASE
-        WHEN (p.equipo_local_id = e.id AND p.goles_local < p.goles_visita) OR
-             (p.equipo_visita_id = e.id AND p.goles_visita < p.goles_local) THEN 1 ELSE 0
+        WHEN p.ganador_escritorio = 'local' AND p.equipo_visita_id = e.id THEN 1
+        WHEN p.ganador_escritorio = 'visita' AND p.equipo_local_id = e.id THEN 1
+        WHEN p.ganador_escritorio IS NULL AND ((p.equipo_local_id = e.id AND p.goles_local < p.goles_visita) OR
+             (p.equipo_visita_id = e.id AND p.goles_visita < p.goles_local)) THEN 1 ELSE 0
       END), 0) + MAX(COALESCE(eb.pp, 0)) AS pp,
       COALESCE(SUM(CASE WHEN p.equipo_local_id = e.id THEN p.goles_local ELSE p.goles_visita END), 0) + MAX(COALESCE(eb.gf, 0)) AS gf,
       COALESCE(SUM(CASE WHEN p.equipo_local_id = e.id THEN p.goles_visita ELSE p.goles_local END), 0) + MAX(COALESCE(eb.gc, 0)) AS gc
@@ -112,7 +122,7 @@ router.get('/:id/tabla', (req, res) => {
 
   // Traer los partidos del torneo para desempate (partidos entre sí)
   const partidos = db.prepare(`
-    SELECT p.equipo_local_id, p.equipo_visita_id, p.goles_local, p.goles_visita
+    SELECT p.equipo_local_id, p.equipo_visita_id, p.goles_local, p.goles_visita, p.ganador_escritorio
     FROM partidos p
     JOIN fechas f ON f.id = p.fecha_id
     WHERE f.torneo_id = ? AND p.estado = 'finalizado'
@@ -130,12 +140,15 @@ router.get('/:id/goleadores', (req, res) => {
     SELECT 
       j.id, j.nombre, j.apellido, j.numero_camiseta,
       e.nombre AS equipo_nombre, e.escudo_url,
-      ej.goles
-    FROM estadisticas_jugador ej
-    JOIN jugadores j ON j.id = ej.jugador_id
+      COUNT(ep.id) AS goles
+    FROM eventos_partido ep
+    JOIN jugadores j ON j.id = ep.jugador_id
     JOIN equipos e ON e.id = j.equipo_id
-    WHERE ej.torneo_id = ? AND ej.goles > 0
-    ORDER BY ej.goles DESC, j.apellido ASC
+    JOIN partidos p ON p.id = ep.partido_id
+    JOIN fechas f ON f.id = p.fecha_id
+    WHERE f.torneo_id = ? AND ep.tipo IN ('GOL', 'GOL_PENAL')
+    GROUP BY j.id
+    ORDER BY goles DESC, j.apellido ASC
     LIMIT 30
   `).all(req.params.id);
   res.json(goleadores);
@@ -260,7 +273,8 @@ router.post('/:id/simular-tabla', (req, res) => {
       equipo_local_id: p.equipo_local_id,
       equipo_visita_id: p.equipo_visita_id,
       goles_local: gl,
-      goles_visita: gv
+      goles_visita: gv,
+      ganador_escritorio: overrides[p.id] ? overrides[p.id].ge : p.ganador_escritorio
     });
 
     const local = stats[p.equipo_local_id];
@@ -271,9 +285,16 @@ router.post('/:id/simular-tabla', (req, res) => {
     local.gf += gl; local.gc += gv;
     visita.gf += gv; visita.gc += gl;
 
-    if (gl > gv) { local.pg++; visita.pp++; }
-    else if (gl < gv) { visita.pg++; local.pp++; }
-    else { local.pe++; visita.pe++; }
+    const win_escritorio = p.ganador_escritorio;
+    if (win_escritorio === 'local') {
+      local.pg++; visita.pp++;
+    } else if (win_escritorio === 'visita') {
+      visita.pg++; local.pp++;
+    } else {
+      if (gl > gv) { local.pg++; visita.pp++; }
+      else if (gl < gv) { visita.pg++; local.pp++; }
+      else { local.pe++; visita.pe++; }
+    }
   });
 
   // Calcular puntos

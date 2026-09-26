@@ -117,7 +117,7 @@ router.post('/', authMiddleware, soloAdmin, (req, res) => {
 // Cargar el resultado final y calcular puntos del Prode automáticamente
 // ─────────────────────────────────────────
 router.put('/:id/resultado', authMiddleware, adminOReportero, (req, res) => {
-  const { goles_local, goles_visita } = req.body;
+  const { goles_local, goles_visita, por_escritorio, ganador_escritorio } = req.body;
   const partido_id = req.params.id;
 
   if (goles_local == null || goles_visita == null) {
@@ -126,8 +126,8 @@ router.put('/:id/resultado', authMiddleware, adminOReportero, (req, res) => {
 
   // Actualizar el partido
   db.prepare(`
-    UPDATE partidos SET goles_local = ?, goles_visita = ?, estado = 'finalizado' WHERE id = ?
-  `).run(goles_local, goles_visita, partido_id);
+    UPDATE partidos SET goles_local = ?, goles_visita = ?, estado = 'finalizado', por_escritorio = ?, ganador_escritorio = ? WHERE id = ?
+  `).run(goles_local, goles_visita, por_escritorio ? 1 : 0, ganador_escritorio || null, partido_id);
 
   // Calcular y actualizar puntos de pronósticos automáticamente
   const pronosticos = db.prepare('SELECT * FROM pronosticos WHERE partido_id = ?').all(partido_id);
@@ -158,6 +158,22 @@ router.put('/:id/resultado', authMiddleware, adminOReportero, (req, res) => {
     ok: true,
     mensaje: `Resultado guardado. Se calcularon puntos para ${pronosticos.length} pronósticos.`
   });
+});
+
+// ─────────────────────────────────────────
+// ADMIN: POST /api/partidos/:id/escritorio
+// Otorgar puntos en escritorio (local, visita o null para limpiar)
+// ─────────────────────────────────────────
+router.post('/:id/escritorio', authMiddleware, soloAdmin, (req, res) => {
+  const { ganador_escritorio } = req.body;
+  if (ganador_escritorio !== 'local' && ganador_escritorio !== 'visita' && ganador_escritorio !== null) {
+    return res.status(400).json({ error: 'ganador_escritorio debe ser local, visita o null' });
+  }
+
+  db.prepare(`UPDATE partidos SET ganador_escritorio = ? WHERE id = ?`)
+    .run(ganador_escritorio, req.params.id);
+
+  res.json({ ok: true, mensaje: 'Ganador de escritorio actualizado' });
 });
 
 // ─────────────────────────────────────────
