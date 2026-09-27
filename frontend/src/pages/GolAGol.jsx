@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { partidosApi, equiposApi } from '../api';
 import { useAuthStore } from '../store';
+import { useWebSocket } from '../hooks/useWebSocket';
 import styles from './GolAGol.module.css';
 
 function EquipoPanel({ 
@@ -307,6 +308,12 @@ export default function GolAGol() {
   const { id } = useParams();
   const queryClient = useQueryClient();
   const isAdmin = useAuthStore(s => s.usuario?.rol === 'admin');
+
+  useWebSocket((msg) => {
+    // Cuando entra un evento por websocket, invalidamos las queries para refrescar
+    queryClient.invalidateQueries(['partido', id]);
+    queryClient.invalidateQueries(['alineaciones', id]);
+  });
 
   // Queries
   const { data: partido, isLoading: loadP } = useQuery({

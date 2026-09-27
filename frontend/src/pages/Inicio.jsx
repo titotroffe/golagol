@@ -1,13 +1,19 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { torneosApi, jugadoresApi } from '../api';
 import { useTorneoStore } from '../store';
 import { Link } from 'react-router-dom';
+import { useWebSocket } from '../hooks/useWebSocket';
 import styles from './Inicio.module.css';
 
 export default function Inicio() {
+  const queryClient = useQueryClient();
   const { torneoActivo } = useTorneoStore();
   const [suscripciones, setSuscripciones] = useState(new Set());
+
+  useWebSocket(() => {
+    queryClient.invalidateQueries(['inicio']);
+  });
 
   const toggleSuscripcion = (id) => {
     setSuscripciones(prev => {
