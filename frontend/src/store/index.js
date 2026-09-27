@@ -51,3 +51,20 @@ export const useWsStore = create((set) => ({
   setConectado: (val) => set({ conectado: val }),
   setUltimoEvento: (evento) => set({ ultimoEvento: evento }),
 }));
+
+// Store de Notificaciones - persiste en localStorage
+export const useNotificacionesStore = create(
+  persist(
+    (set) => ({
+      suscripciones: [], // array de IDs de partidos
+      toggleSuscripcion: (id) => set((state) => {
+        const has = state.suscripciones.includes(id);
+        const next = has ? state.suscripciones.filter(x => x !== id) : [...state.suscripciones, id];
+        return { suscripciones: next };
+      }),
+    }),
+    {
+      name: 'notificaciones-storage',
+    }
+  )
+);

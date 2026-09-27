@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { torneosApi, jugadoresApi } from '../api';
-import { useTorneoStore } from '../store';
+import { useTorneoStore, useNotificacionesStore } from '../store';
 import { Link } from 'react-router-dom';
 import { useWebSocket } from '../hooks/useWebSocket';
 import styles from './Inicio.module.css';
@@ -9,19 +9,25 @@ import styles from './Inicio.module.css';
 export default function Inicio() {
   const queryClient = useQueryClient();
   const { torneoActivo } = useTorneoStore();
-  const [suscripciones, setSuscripciones] = useState(new Set());
+  const suscripciones = useNotificacionesStore(s => s.suscripciones);
+  const toggleNotificacion = useNotificacionesStore(s => s.toggleSuscripcion);
 
   useWebSocket(() => {
     queryClient.invalidateQueries(['inicio']);
   });
 
-  const toggleSuscripcion = (id) => {
-    setSuscripciones(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const toggleSuscripcion = async (id) => {
+    // Si vamos a activar, pedimos permiso primero
+    if (!suscripciones.includes(id)) {
+      if ('Notification' in window && Notification.permission !== 'granted') {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+          alert('Debes permitir las notificaciones en tu navegador para recibir alertas.');
+          return;
+        }
+      }
+    }
+    toggleNotificacion(id);
   };
 
   const { data, isLoading, error } = useQuery({
@@ -53,7 +59,7 @@ export default function Inicio() {
           </div>
           <div className={styles.partidosGrid}>
             {enVivo.map((p) => {
-              const estaSuscrito = suscripciones.has(p.id);
+              const estaSuscrito = suscripciones.includes(p.id);
               return (
                 <div key={p.id} className={`${styles.partidoCard} ${styles.liveCard}`}>
                   <div className={styles.fechaBadge}>Fecha {p.fecha_numero}</div>
@@ -104,7 +110,7 @@ export default function Inicio() {
               const date = new Date(p.fecha_hora);
               const dia = date.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: 'short' });
               const hora = date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-              const estaSuscrito = suscripciones.has(p.id);
+              const estaSuscrito = suscripciones.includes(p.id);
 
               return (
                 <div key={p.id} className={styles.partidoCard}>
