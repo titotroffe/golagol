@@ -19,12 +19,19 @@ export default function Inicio() {
   const toggleSuscripcion = async (id) => {
     // Si vamos a activar, pedimos permiso primero
     if (!suscripciones.includes(id)) {
-      if ('Notification' in window && Notification.permission !== 'granted') {
-        const perm = await Notification.requestPermission();
-        if (perm !== 'granted') {
-          alert('Debes permitir las notificaciones en tu navegador para recibir alertas.');
-          return;
+      if ('Notification' in window) {
+        if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+          try {
+            await Notification.requestPermission();
+          } catch (e) {
+            console.warn("No se pudo pedir permiso de notificaciones:", e);
+          }
         }
+        if (Notification.permission === 'denied') {
+          alert('Las notificaciones de sistema están bloqueadas. Asegurate de acceder mediante HTTPS (seguro) o habilitalas en tu navegador.');
+        }
+      } else {
+        alert('Tu navegador no soporta notificaciones de sistema.');
       }
     }
     toggleNotificacion(id);

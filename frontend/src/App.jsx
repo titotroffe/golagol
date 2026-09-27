@@ -20,6 +20,7 @@ import Simular from './pages/Simular';
 import Perfil from './pages/Perfil';
 import Inicio from './pages/Inicio';
 import AdminSanciones from './pages/AdminSanciones';
+import ToastContainer from './components/Toast/Toast';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -67,6 +68,7 @@ export default function App() {
             <Route path="/admin/partido/:id" element={<GolAGol />} />
           </Route>
         </Routes>
+        <ToastContainer />
       </BrowserRouter>
     </QueryClientProvider>
   );

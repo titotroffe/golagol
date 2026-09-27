@@ -88,7 +88,7 @@ function EquipoPanel({
       equipo_id: equipoId,
       jugador_id: jugadorId,
       detalle: detalleObj ? JSON.stringify(detalleObj) : '',
-      minuto: 0,
+      minuto: actionForm.minuto ? parseInt(actionForm.minuto) : 0,
     });
   };
 
@@ -161,6 +161,15 @@ function EquipoPanel({
             ))}
           </select>
 
+          <input 
+            type="number" 
+            placeholder="Minuto (ej: 45)" 
+            value={actionForm.minuto || ''} 
+            onChange={e => setActionForm({...actionForm, minuto: e.target.value})}
+            className={styles.selectJ}
+            style={{ marginTop: '8px', marginBottom: '8px' }}
+          />
+
           {pendingAction === 'CAMBIO' && (
             <select 
               value={actionForm.entraId || ''} 
@@ -208,7 +217,8 @@ function EquipoPanel({
         <div className={styles.teamActionsBtnGroup}>
           <button onClick={()=>setPendingAction('GOL')} className={styles.btnTeamAction}>Gol</button>
           <button onClick={() => {
-            registrarEventoMut.mutate({tipo: 'PENAL_A_FAVOR', equipo_id: equipoId, detalle: esLocal ? 'Local' : 'Visita', minuto: 0});
+            const minStr = prompt("¿En qué minuto es el penal?");
+            registrarEventoMut.mutate({tipo: 'PENAL_A_FAVOR', equipo_id: equipoId, detalle: esLocal ? 'Local' : 'Visita', minuto: parseInt(minStr) || 0});
             setPendingAction('PATEAR_PENAL');
           }} className={styles.btnTeamAction}>Penal</button>
           <button onClick={()=>setPendingAction('AMARILLA')} className={styles.btnTeamAction}>Amarilla</button>

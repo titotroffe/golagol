@@ -68,3 +68,18 @@ export const useNotificacionesStore = create(
     }
   )
 );
+
+// Store para Toasts (Notificaciones dentro de la app)
+export const useToastStore = create((set) => ({
+  toasts: [],
+  addToast: (mensaje) => {
+    const id = Date.now();
+    set((state) => ({ toasts: [...state.toasts, { id, mensaje }] }));
+    setTimeout(() => {
+      set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }));
+    }, 5000);
+  },
+  removeToast: (id) => {
+    set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }));
+  }
+}));

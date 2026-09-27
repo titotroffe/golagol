@@ -283,9 +283,30 @@ router.post('/:id/evento', authMiddleware, adminOReportero, (req, res) => {
   if (['INICIO_PARTIDO', 'INICIO_2T'].includes(tipo)) {
     db.prepare("UPDATE partidos SET estado = 'en_curso' WHERE id = ?").run(partido_id);
   }
+  let puntos_usuarios = [];
   if (tipo === 'FIN_PARTIDO') {
     avanzarSanciones(partido_id);
     db.prepare("UPDATE partidos SET estado = 'finalizado' WHERE id = ?").run(partido_id);
+
+    // Calcular puntos automáticamente
+    const partidoFinal = db.prepare('SELECT goles_local, goles_visita FROM partidos WHERE id = ?').get(partido_id);
+    const gl = partidoFinal.goles_local || 0;
+    const gv = partidoFinal.goles_visita || 0;
+    
+    const pronosticos = db.prepare('SELECT * FROM pronosticos WHERE partido_id = ?').all(partido_id);
+    const actualizarPuntos = db.transaction(() => {
+      pronosticos.forEach(p => {
+        let puntos = 0;
+        if (p.goles_local === gl && p.goles_visita === gv) {
+          puntos = 6;
+        } else if (Math.sign(gl - gv) === Math.sign(p.goles_local - p.goles_visita)) {
+          puntos = 3;
+        }
+        db.prepare(`UPDATE pronosticos SET puntos_obtenidos = ?, calculado_en = datetime('now') WHERE id = ?`).run(puntos, p.id);
+        puntos_usuarios.push({ usuario_id: p.usuario_id, puntos });
+      });
+    });
+    actualizarPuntos();
   }
 
   const result = db.prepare(`
@@ -301,12 +322,35 @@ router.post('/:id/evento', authMiddleware, adminOReportero, (req, res) => {
     WHERE ep.id = ?
   `).get(result.lastInsertRowid);
 
+  // Verificar si fue doble amarilla para el broadcast
+  let broadcastEvento = { ...evento };
+  if (broadcastEvento.tipo === 'AMARILLA' && final_jugador_id) {
+    const amarillasCount = db.prepare(`
+      SELECT COUNT(*) as count FROM eventos_partido 
+      WHERE partido_id = ? AND jugador_id = ? AND tipo = 'AMARILLA'
+    `).get(partido_id, final_jugador_id).count;
+
+    if (amarillasCount >= 2) {
+      broadcastEvento.tipo = 'DOBLE_AMARILLA';
+    }
+  }
+
   // Emitir por WebSocket a todos los clientes conectados (si el ws está disponible)
   if (req.app.locals.broadcast) {
+    const partidoActualizado = db.prepare(`
+      SELECT p.goles_local, p.goles_visita, l.nombre as local_nombre, v.nombre as visita_nombre
+      FROM partidos p
+      JOIN equipos l ON p.equipo_local_id = l.id
+      JOIN equipos v ON p.equipo_visita_id = v.id
+      WHERE p.id = ?
+    `).get(partido_id);
+
     req.app.locals.broadcast({
       tipo: 'EVENTO_PARTIDO',
       partido_id,
-      evento
+      evento: broadcastEvento,
+      partido: partidoActualizado,
+      puntos_usuarios
     });
   }
 
