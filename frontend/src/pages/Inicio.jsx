@@ -46,10 +46,25 @@ export default function Inicio() {
             <h2 className={styles.sectionTitle}>En Vivo</h2>
           </div>
           <div className={styles.partidosGrid}>
-            {enVivo.map((p) => (
-              <div key={p.id} className={`${styles.partidoCard} ${styles.liveCard}`}>
-                <div className={styles.fechaBadge}>Fecha {p.fecha_numero}</div>
-                <div className={styles.equiposContainer}>
+            {enVivo.map((p) => {
+              const estaSuscrito = suscripciones.has(p.id);
+              return (
+                <div key={p.id} className={`${styles.partidoCard} ${styles.liveCard}`}>
+                  <div className={styles.fechaBadge}>Fecha {p.fecha_numero}</div>
+
+                  <button 
+                    className={`${styles.btnCampana} ${estaSuscrito ? styles.campanaActiva : ''}`}
+                    onClick={() => toggleSuscripcion(p.id)}
+                    title={estaSuscrito ? "Desactivar notificaciones" : "Recibir notificaciones"}
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                      {estaSuscrito && <line x1="2" y1="2" x2="22" y2="22" strokeWidth="2" stroke="currentColor"></line>}
+                    </svg>
+                  </button>
+
+                  <div className={styles.equiposContainer}>
                   <div className={styles.equipo}>
                     {p.local_escudo && <img src={p.local_escudo} alt="" className={styles.escudo} />}
                     <span className={styles.equipoNombre}>{p.local_nombre}</span>
@@ -66,9 +81,10 @@ export default function Inicio() {
                     <span className={styles.equipoNombre}>{p.visita_nombre}</span>
                   </div>
                 </div>
-                <Link to={`/admin/partido/${p.id}`} className={styles.btnVer}>Ver Minuto a Minuto</Link>
+                <Link to={`/partido/${p.id}`} className={styles.btnVer}>Ver Minuto a Minuto</Link>
               </div>
-            ))}
+            );
+          })}
           </div>
         </section>
       )}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { partidosApi, equiposApi } from '../api';
+import { useAuthStore } from '../store';
 import styles from './GolAGol.module.css';
 
 function EquipoPanel({ 
@@ -11,7 +12,8 @@ function EquipoPanel({
   plantel, 
   agregarAlineacionMut, 
   eliminarAlineacionMut,
-  registrarEventoMut
+  registrarEventoMut,
+  isAdmin
 }) {
   const equipoId = esLocal ? partido.equipo_local_id : partido.equipo_visita_id;
   const nombre = esLocal ? partido.local_nombre : partido.visita_nombre;
@@ -201,18 +203,20 @@ function EquipoPanel({
     <div className={styles.equipoCol}>
       <h2 className={styles.eqTitle}>{nombre}</h2>
 
-      <div className={styles.teamActionsBtnGroup}>
-        <button onClick={()=>setPendingAction('GOL')} className={styles.btnTeamAction}>Gol</button>
-        <button onClick={() => {
-          registrarEventoMut.mutate({tipo: 'PENAL_A_FAVOR', equipo_id: equipoId, detalle: esLocal ? 'Local' : 'Visita', minuto: 0});
-          setPendingAction('PATEAR_PENAL');
-        }} className={styles.btnTeamAction}>Penal</button>
-        <button onClick={()=>setPendingAction('AMARILLA')} className={styles.btnTeamAction}>Amarilla</button>
-        <button onClick={()=>setPendingAction('ROJA')} className={styles.btnTeamAction}>Roja</button>
-        <button onClick={()=>setPendingAction('CAMBIO')} className={styles.btnTeamAction}>Cambio</button>
-      </div>
+      {isAdmin && (
+        <div className={styles.teamActionsBtnGroup}>
+          <button onClick={()=>setPendingAction('GOL')} className={styles.btnTeamAction}>Gol</button>
+          <button onClick={() => {
+            registrarEventoMut.mutate({tipo: 'PENAL_A_FAVOR', equipo_id: equipoId, detalle: esLocal ? 'Local' : 'Visita', minuto: 0});
+            setPendingAction('PATEAR_PENAL');
+          }} className={styles.btnTeamAction}>Penal</button>
+          <button onClick={()=>setPendingAction('AMARILLA')} className={styles.btnTeamAction}>Amarilla</button>
+          <button onClick={()=>setPendingAction('ROJA')} className={styles.btnTeamAction}>Roja</button>
+          <button onClick={()=>setPendingAction('CAMBIO')} className={styles.btnTeamAction}>Cambio</button>
+        </div>
+      )}
 
-      {renderActionForm()}
+      {isAdmin && renderActionForm()}
 
       <div className={styles.section}>
         <div className={styles.secHeader}>
@@ -239,11 +243,13 @@ function EquipoPanel({
                   {expulsado && <span className={styles.tagRoja}>🟥</span>}
                   {haSalido && <span className={styles.tagSub}>⬇️ Salió</span>}
                 </div>
-                <button title="Quitar de planilla" onClick={() => eliminarAlineacionMut.mutate(t.jugador_id)} className={styles.btnRemoveTiny} disabled={haSalido}>✖</button>
+                {isAdmin && (
+                  <button title="Quitar de planilla" onClick={() => eliminarAlineacionMut.mutate(t.jugador_id)} className={styles.btnRemoveTiny} disabled={haSalido}>✖</button>
+                )}
               </li>
             );
           })}
-          {titulares.length < 11 && (
+          {isAdmin && titulares.length < 11 && (
             <li className={styles.jAdd}>
               <select onChange={(e) => handleSelectAlineacion(e, 'titular')} className={styles.selectJ}>
                 <option value="">+ Agregar Titular</option>
@@ -274,11 +280,13 @@ function EquipoPanel({
                   {expulsado && <span className={styles.tagRoja}>🟥</span>}
                   {haEntrado && <span className={styles.tagSub}>⬆️ Jugando</span>}
                 </div>
-                <button title="Quitar de planilla" onClick={() => eliminarAlineacionMut.mutate(s.jugador_id)} className={styles.btnRemoveTiny} disabled={haEntrado}>✖</button>
+                {isAdmin && (
+                  <button title="Quitar de planilla" onClick={() => eliminarAlineacionMut.mutate(s.jugador_id)} className={styles.btnRemoveTiny} disabled={haEntrado}>✖</button>
+                )}
               </li>
             );
           })}
-          {suplentes.length < 7 && (
+          {isAdmin && suplentes.length < 7 && (
             <li className={styles.jAdd}>
               <select onChange={(e) => handleSelectAlineacion(e, 'suplente')} className={styles.selectJ}>
                 <option value="">+ Agregar Suplente</option>
@@ -298,6 +306,7 @@ function EquipoPanel({
 export default function GolAGol() {
   const { id } = useParams();
   const queryClient = useQueryClient();
+  const isAdmin = useAuthStore(s => s.usuario?.rol === 'admin');
 
   // Queries
   const { data: partido, isLoading: loadP } = useQuery({
@@ -395,19 +404,25 @@ export default function GolAGol() {
       
       {/* HEADER MARCADOR EN VIVO */}
       <div className={styles.marcadorTop}>
-        <Link to="/admin" className={styles.btnBack}>← Volver</Link>
+        <Link to={isAdmin ? "/admin" : "/"} className={styles.btnBack}>← Volver</Link>
         <div className={styles.scoreBoard}>
-          <div className={styles.scoreTeam}>{partido.local_nombre}</div>
+          <div className={`${styles.scoreTeam} ${styles.scoreLocal}`}>
+            {partido.local_escudo && <img src={partido.local_escudo} alt="" className={styles.headerEscudo} />}
+            <span className={styles.teamNameText}>{partido.local_nombre}</span>
+          </div>
           <div className={styles.scoreCenter}>
             <div className={styles.scoreNumbers}>
-              {partido.goles_local || 0} - {partido.goles_visita || 0}
+              {partido.goles_local ?? 0} - {partido.goles_visita ?? 0}
             </div>
             <div className={styles.timerDisplay}>
               {String(tiempoState.mins).padStart(2, '0')}:{String(tiempoState.secs).padStart(2, '0')}
               {tiempoState.extra && <span className={styles.timerExtra}> +{tiempoState.extra}'</span>}
             </div>
           </div>
-          <div className={styles.scoreTeam}>{partido.visita_nombre}</div>
+          <div className={`${styles.scoreTeam} ${styles.scoreVisita}`}>
+            {partido.visita_escudo && <img src={partido.visita_escudo} alt="" className={styles.headerEscudo} />}
+            <span className={styles.teamNameText}>{partido.visita_nombre}</span>
+          </div>
         </div>
         <div className={styles.estadoIndicator}>
           {partido.estado === 'pendiente' ? 'Esperando inicio' : (partido.estado === 'en_curso' ? 'EN VIVO' : 'FINALIZADO')}
@@ -423,20 +438,23 @@ export default function GolAGol() {
           agregarAlineacionMut={agregarAlin}
           eliminarAlineacionMut={eliminarAlin}
           registrarEventoMut={regEvento}
+          isAdmin={isAdmin}
         />
         
         {/* PANEL CENTRAL: EVENTOS RECIENTES Y CONTROLES DE PARTIDO */}
         <div className={styles.feedCol}>
-          <div className={styles.matchControls}>
-            <button onClick={() => regEvento.mutate({tipo: 'INICIO_PARTIDO', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Inicio 1T</button>
-            <button onClick={() => regEvento.mutate({tipo: 'FIN_1T', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Fin 1T</button>
-            <button onClick={() => regEvento.mutate({tipo: 'INICIO_2T', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Inicio 2T</button>
-            <button onClick={() => regEvento.mutate({tipo: 'FIN_PARTIDO', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Fin Partido</button>
-            <button onClick={() => {
-              const min = prompt("Cuantos minutos agrega el arbitro?");
-              if (min) regEvento.mutate({tipo: 'TIEMPO_EXTRA', equipo_id: null, detalle: min});
-            }} className={styles.btnMatchState}>Adicion</button>
-          </div>
+          {isAdmin && (
+            <div className={styles.matchControls}>
+              <button onClick={() => regEvento.mutate({tipo: 'INICIO_PARTIDO', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Inicio 1T</button>
+              <button onClick={() => regEvento.mutate({tipo: 'FIN_1T', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Fin 1T</button>
+              <button onClick={() => regEvento.mutate({tipo: 'INICIO_2T', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Inicio 2T</button>
+              <button onClick={() => regEvento.mutate({tipo: 'FIN_PARTIDO', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Fin Partido</button>
+              <button onClick={() => {
+                const min = prompt("Cuantos minutos agrega el arbitro?");
+                if (min) regEvento.mutate({tipo: 'TIEMPO_EXTRA', equipo_id: null, detalle: min});
+              }} className={styles.btnMatchState}>Adicion</button>
+            </div>
+          )}
           <h3 className={styles.feedTitle}>Eventos Registrados</h3>
           <div className={styles.feedScroll}>
             {partido.eventos?.slice().reverse().map(ev => {
@@ -477,17 +495,19 @@ export default function GolAGol() {
                       {ev.equipo_nombre && <span className={styles.evTeam}>({ev.equipo_nombre})</span>}
                     </div>
                   </div>
-                  <button 
-                    title="Eliminar evento" 
-                    onClick={() => {
-                      if (window.confirm("¿Seguro que querés eliminar este evento?")) {
-                        eliminarEventoMut.mutate(ev.id);
-                      }
-                    }} 
-                    className={styles.btnDeleteEvent}
-                  >
-                    🗑️
-                  </button>
+                  {isAdmin && (
+                    <button 
+                      title="Eliminar evento" 
+                      onClick={() => {
+                        if (window.confirm("¿Seguro que querés eliminar este evento?")) {
+                          eliminarEventoMut.mutate(ev.id);
+                        }
+                      }} 
+                      className={styles.btnDeleteEvent}
+                    >
+                      🗑️
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -505,6 +525,7 @@ export default function GolAGol() {
           agregarAlineacionMut={agregarAlin}
           eliminarAlineacionMut={eliminarAlin}
           registrarEventoMut={regEvento}
+          isAdmin={isAdmin}
         />
       </div>
 

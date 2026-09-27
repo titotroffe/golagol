@@ -52,15 +52,32 @@
   font-weight: 800;
   color: white;
   text-transform: uppercase;
-  width: 150px;
+  width: 200px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.scoreTeam:first-child {
+.scoreLocal {
+  justify-content: flex-end;
   text-align: right;
 }
 
-.scoreTeam:last-child {
+.scoreVisita {
+  justify-content: flex-start;
   text-align: left;
+}
+
+.headerEscudo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+.teamNameText {
+  display: inline-block;
+  word-break: break-word;
 }
 
 .scoreCenter {
@@ -515,5 +532,53 @@
   .feedCol {
     width: 100%;
     height: 300px;
+  }
+}
+
+@media (max-width: 600px) {
+  .marcadorTop {
+    padding: 12px 8px;
+  }
+  .scoreBoard {
+    gap: 24px;
+    width: 100%;
+    justify-content: center;
+  }
+  .scoreTeam {
+    width: auto;
+    justify-content: center !important;
+  }
+  .teamNameText {
+    display: none;
+  }
+  .headerEscudo {
+    width: 64px;
+    height: 64px;
+  }
+  .scoreNumbers {
+    font-size: 1.5rem;
+    padding: 2px 8px;
+  }
+  .timerDisplay {
+    font-size: 0.9rem;
+    padding: 2px 8px;
+  }
+  .btnBack {
+    position: static;
+    margin-bottom: 8px;
+    align-self: flex-start;
+  }
+  .jInfo {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .nombre {
+    font-size: 0.85rem;
+    word-break: break-word;
+  }
+  .dorsal {
+    width: 22px;
+    height: 22px;
+    font-size: 0.75rem;
   }
 }

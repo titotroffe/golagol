@@ -59,6 +59,9 @@ export default function App() {
             </Route>
           </Route>
 
+          {/* Vistas públicas a PANTALLA COMPLETA (sin Sidebar) */}
+          <Route path="/partido/:id" element={<GolAGol />} />
+
           {/* Vistas protegidas a PANTALLA COMPLETA (sin Sidebar) */}
           <Route element={<ProtectedRoute />}>
             <Route path="/admin/partido/:id" element={<GolAGol />} />
