@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { equiposApi, jugadoresApi } from '../api';
-import { useAuthStore } from '../store';
 import styles from './Equipos.module.css';
 
-function JugadorRow({ j, esAdmin, equipoId }) {
+function JugadorRow({ j, equipoId }) {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -43,7 +42,6 @@ function JugadorRow({ j, esAdmin, equipoId }) {
     );
   }
 
-  // Parsear fecha para mostrar sin desfase horario
   let fechaFormat = '';
   if (j.fecha_nacimiento) {
     const [y, m, d] = j.fecha_nacimiento.split('-');
@@ -64,9 +62,7 @@ function JugadorRow({ j, esAdmin, equipoId }) {
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         {j.dorsal && <span className={styles.jDorsal}>{j.dorsal}</span>}
-        {esAdmin && (
-          <button onClick={() => setIsEditing(true)} title="Editar Jugador" style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.1rem', opacity: 0.7 }}>✏️</button>
-        )}
+        <button onClick={() => setIsEditing(true)} title="Editar Jugador" style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.1rem', opacity: 0.7 }}>✏️</button>
       </div>
     </li>
   );
@@ -74,9 +70,6 @@ function JugadorRow({ j, esAdmin, equipoId }) {
 
 function PlantelTeam({ equipo }) {
   const queryClient = useQueryClient();
-  const usuario = useAuthStore(s => s.usuario);
-  const esAdmin = usuario?.rol === 'admin' || usuario?.rol === 'reportero';
-  
   const [bulkText, setBulkText] = useState('');
 
   const { data: plantel, isLoading } = useQuery({
@@ -99,7 +92,6 @@ function PlantelTeam({ equipo }) {
     let errorCount = 0;
 
     for (const line of lines) {
-      // Separar por espacios o tabs (para copiar/pegar desde excel/pdf)
       const parts = line.split(/\s+/);
       const nombre = parts[0];
       const apellido = parts.slice(1).join(' ');
@@ -141,40 +133,37 @@ function PlantelTeam({ equipo }) {
             <ul className={styles.jugadoresList}>
               {plantel?.length === 0 && <p className={styles.msg}>No hay jugadores cargados.</p>}
               {plantel?.map(j => (
-                <JugadorRow key={j.id} j={j} esAdmin={esAdmin} equipoId={equipo.id} />
+                <JugadorRow key={j.id} j={j} equipoId={equipo.id} />
               ))}
             </ul>
           )}
         </div>
 
-        {esAdmin && (
-          <div className={styles.adminCol}>
-            <h3 className={styles.subTitle}>Carga Rápida (Admin)</h3>
-            <p className={styles.helpText}>Escribí o pegá una lista de jugadores (uno por línea). El primer texto será el nombre y el resto el apellido.</p>
-            <textarea
-              className={styles.bulkInput}
-              rows={10}
-              placeholder="Ej:\nLionel Messi\nEmiliano Martinez\nAngel Di Maria"
-              value={bulkText}
-              onChange={(e) => setBulkText(e.target.value)}
-              disabled={agregarJugadorMut.isPending}
-            />
-            <button 
-              className={styles.btnBulk} 
-              onClick={handleBulkAdd}
-              disabled={agregarJugadorMut.isPending || !bulkText.trim()}
-            >
-              {agregarJugadorMut.isPending ? 'Cargando...' : 'Cargar Jugadores'}
-            </button>
-          </div>
-        )}
+        <div className={styles.adminCol}>
+          <h3 className={styles.subTitle}>Carga Rápida</h3>
+          <p className={styles.helpText}>Escribí o pegá una lista de jugadores (uno por línea). El primer texto será el nombre y el resto el apellido.</p>
+          <textarea
+            className={styles.bulkInput}
+            rows={10}
+            placeholder="Ej:\nLionel Messi\nEmiliano Martinez\nAngel Di Maria"
+            value={bulkText}
+            onChange={(e) => setBulkText(e.target.value)}
+            disabled={agregarJugadorMut.isPending}
+          />
+          <button 
+            className={styles.btnBulk} 
+            onClick={handleBulkAdd}
+            disabled={agregarJugadorMut.isPending || !bulkText.trim()}
+          >
+            {agregarJugadorMut.isPending ? 'Cargando...' : 'Cargar Jugadores'}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-
-export default function Equipos() {
+export default function AdminPlanteles() {
   const [selectedEquipoId, setSelectedEquipoId] = useState(null);
 
   const { data: equipos, isLoading } = useQuery({
@@ -185,9 +174,7 @@ export default function Equipos() {
   const selectedEquipo = equipos?.find(e => e.id === selectedEquipoId);
 
   return (
-    <div className={styles.wrap}>
-
-
+    <div className={styles.wrap} style={{ padding: '0', maxWidth: '100%' }}>
       {isLoading ? (
         <p className={styles.msg}>Cargando equipos...</p>
       ) : (
@@ -213,9 +200,8 @@ export default function Equipos() {
       {selectedEquipo ? (
         <PlantelTeam equipo={selectedEquipo} />
       ) : (
-        !isLoading && <p className={styles.msg}>Seleccioná un equipo para ver su plantel.</p>
+        !isLoading && <p className={styles.msg}>Seleccioná un equipo para administrar su plantel.</p>
       )}
-
     </div>
   );
 }

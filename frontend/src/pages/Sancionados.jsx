@@ -31,35 +31,40 @@ export default function Sancionados() {
             <table className={est.table}>
               <thead>
                 <tr>
-                  <th className={est.thJugador} style={{ width: '28%' }}>Jugador</th>
-                  <th className={est.thEquipo} style={{ width: '22%' }}>Equipo</th>
-                  <th className={est.thNum} title="Fechas a cumplir" style={{ textAlign: 'center', width: '9%' }}>Total</th>
-                  <th className={est.thNum} title="Fechas cumplidas" style={{ textAlign: 'center', width: '12%' }}>Cumplidas</th>
-                  <th className={est.thNum} title="Fechas restantes" style={{ textAlign: 'center', width: '9%' }}>Restan</th>
-                  <th className={est.thMotivo} style={{ width: '20%' }}>Motivo</th>
+                  <th className={est.thJugador} style={{ width: '40%' }}>Jugador</th>
+                  <th className={est.thEquipo} style={{ width: '30%' }}>Equipo</th>
+                  <th className={est.thNum} title="Fechas a cumplir" style={{ textAlign: 'center', width: '10%' }}>
+                    <span className={est.hideMobile}>Total</span>
+                    <span className={est.showMobile}>Tot</span>
+                  </th>
+                  <th className={est.thNum} title="Fechas cumplidas" style={{ textAlign: 'center', width: '10%' }}>
+                    <span className={est.hideMobile}>Cumplidas</span>
+                    <span className={est.showMobile}>Cump</span>
+                  </th>
+                  <th className={est.thNum} title="Fechas restantes" style={{ textAlign: 'center', width: '10%' }}>
+                    <span className={est.hideMobile}>Restan</span>
+                    <span className={est.showMobile}>Rest</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {sancionados.map((s) => (
                   <tr key={`${s.id}-${s.motivo}`} className={est.row}>
-                    <td style={{ padding: '10px' }}>
+                    <td>
                       <div className={est.tdJugador}>
                         <span className={est.nombreJugador}>{s.nombre} {s.apellido}</span>
                       </div>
                     </td>
-                    <td style={{ padding: '10px' }}>
+                    <td>
                       <div className={est.tdEquipo}>
                         {s.escudo_url && <img src={s.escudo_url} alt="" className={est.escudo} />}
-                        <span>{s.equipo_nombre}</span>
+                        <span className={est.equipoTextMobile}>{s.equipo_nombre}</span>
                       </div>
                     </td>
-                    <td style={{ padding: '10px', textAlign: 'center' }}>{s.fechas_a_cumplir}</td>
-                    <td style={{ padding: '10px', textAlign: 'center' }}>{s.fechas_cumplidas}</td>
-                    <td style={{ padding: '10px', textAlign: 'center' }}>
+                    <td style={{ textAlign: 'center' }}>{s.fechas_a_cumplir}</td>
+                    <td style={{ textAlign: 'center' }}>{s.fechas_cumplidas}</td>
+                    <td style={{ textAlign: 'center' }}>
                       <span className={est.rojasBadge}>{s.fechas_restantes}</span>
-                    </td>
-                    <td className={est.tdMotivo} style={{ padding: '10px', whiteSpace: 'normal', lineHeight: '1.4' }}>
-                      {s.motivo || "-"}
                     </td>
                   </tr>
                 ))}

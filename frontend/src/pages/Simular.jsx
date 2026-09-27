@@ -103,45 +103,47 @@ export default function Simular() {
               const valVisita = overrides[p.id]?.visita !== undefined ? overrides[p.id].visita : (p.estado === 'finalizado' ? p.goles_visita : "");
               return (
                 <div key={p.id} className={prodeStyles.partidoCard}>
-                  {/* Equipo Local */}
-                  <div className={`${prodeStyles.equipo} ${prodeStyles.equipoLocal}`}>
-                    <span className={prodeStyles.equipoNombre}>{p.local_nombre}</span>
-                    {p.local_escudo
-                      ? <img src={p.local_escudo} alt="" className={prodeStyles.escudo} />
-                      : <span className={prodeStyles.escudoVacio} />
-                    }
-                  </div>
-
-                  {/* Marcador Central / Inputs */}
-                  <div className={prodeStyles.marcadorCol}>
-                    <div className={prodeStyles.inputGroup}>
-                      <input
-                        type="number"
-                        min="0" max="99"
-                        className={prodeStyles.inputGol}
-                        value={valLocal}
-                        onChange={e => handleChange(p, "local", e.target.value)}
-                        placeholder="-"
-                      />
-                      <span className={prodeStyles.golSep}>-</span>
-                      <input
-                        type="number"
-                        min="0" max="99"
-                        className={prodeStyles.inputGol}
-                        value={valVisita}
-                        onChange={e => handleChange(p, "visita", e.target.value)}
-                        placeholder="-"
-                      />
+                  <div className={prodeStyles.mainRow}>
+                    {/* Equipo Local */}
+                    <div className={`${prodeStyles.equipo} ${prodeStyles.equipoLocal}`}>
+                      <span className={prodeStyles.equipoNombre}>{p.local_nombre}</span>
+                      {p.local_escudo
+                        ? <img src={p.local_escudo} alt="" className={prodeStyles.escudo} />
+                        : <span className={prodeStyles.escudoVacio} />
+                      }
                     </div>
-                  </div>
 
-                  {/* Equipo Visita */}
-                  <div className={`${prodeStyles.equipo} ${prodeStyles.equipoVisita}`}>
-                    {p.visita_escudo
-                      ? <img src={p.visita_escudo} alt="" className={prodeStyles.escudo} />
-                      : <span className={prodeStyles.escudoVacio} />
-                    }
-                    <span className={prodeStyles.equipoNombre}>{p.visita_nombre}</span>
+                    {/* Marcador Central / Inputs */}
+                    <div className={prodeStyles.marcadorCol} style={{ gap: 0 }}>
+                      <div className={prodeStyles.inputGroup}>
+                        <input
+                          type="number"
+                          min="0" max="99"
+                          className={prodeStyles.inputGol}
+                          value={valLocal}
+                          onChange={e => handleChange(p, "local", e.target.value)}
+                          placeholder="-"
+                        />
+                        <span className={prodeStyles.golSep}>-</span>
+                        <input
+                          type="number"
+                          min="0" max="99"
+                          className={prodeStyles.inputGol}
+                          value={valVisita}
+                          onChange={e => handleChange(p, "visita", e.target.value)}
+                          placeholder="-"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Equipo Visita */}
+                    <div className={`${prodeStyles.equipo} ${prodeStyles.equipoVisita}`}>
+                      {p.visita_escudo
+                        ? <img src={p.visita_escudo} alt="" className={prodeStyles.escudo} />
+                        : <span className={prodeStyles.escudoVacio} />
+                      }
+                      <span className={prodeStyles.equipoNombre}>{p.visita_nombre}</span>
+                    </div>
                   </div>
                 </div>
               );
@@ -170,40 +172,40 @@ export default function Simular() {
               <span className={est.secTitle}>Resultado de la Simulacion</span>
               <span className={est.secSub}>Tabla hipotetica considerando los resultados ingresados</span>
             </div>
-            <div className={est.simTablaWrap}>
-              <table className={est.table} style={{ width: "100%", borderCollapse: "collapse" }}>
+            <div className={styles.tableOuter}>
+              <table className={styles.table}>
                 <thead>
                   <tr>
-                    <th className={est.thPos}>#</th>
-                    <th className={est.thJugador}>Equipo</th>
-                    <th className={est.thNum}>PTS</th>
-                    <th className={est.thNum}>PJ</th>
-                    <th className={est.thNum}>PG</th>
-                    <th className={est.thNum}>PE</th>
-                    <th className={est.thNum}>PP</th>
-                    <th className={est.thNum}>GF</th>
-                    <th className={est.thNum}>GC</th>
-                    <th className={est.thNum}>DG</th>
+                    <th className={styles.thPos}>#</th>
+                    <th className={styles.thEquipo}>Equipo</th>
+                    <th className={styles.thPts}>PTS</th>
+                    <th className={styles.thNum}>PJ</th>
+                    <th className={styles.thNum}>PG</th>
+                    <th className={styles.thNum}>PE</th>
+                    <th className={styles.thNum}>PP</th>
+                    <th className={styles.thNum}>GF</th>
+                    <th className={styles.thNum}>GC</th>
+                    <th className={styles.thNum}>DG</th>
                   </tr>
                 </thead>
                 <tbody>
                   {tablaSimulada.map((eq, idx) => (
-                    <tr key={eq.equipo_id} className={est.row}>
-                      <td className={`${est.tdPos} ${idx < 8 ? styles.posPlayoff : ""}`}>{eq.posicion}</td>
-                      <td style={{ padding: "9px 10px" }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
-                          {eq.escudo_url && <img src={eq.escudo_url} alt="" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />}
-                          <span>{eq.nombre}</span>
+                    <tr key={eq.equipo_id} className={styles.row}>
+                      <td className={`${styles.tdPos} ${idx < 8 ? styles.posPlayoff : ""}`}>{eq.posicion}</td>
+                      <td className={styles.tdEquipo}>
+                        <div className={styles.equipoWrap}>
+                          {eq.escudo_url ? <img src={eq.escudo_url} alt="" className={styles.escudo} /> : <span className={styles.escudoVacio} />}
+                          <span className={styles.equipoNombre}>{eq.nombre}</span>
                         </div>
                       </td>
-                      <td style={{ textAlign: "center", fontWeight: 800, color: "#d29922" }}>{eq.puntos}</td>
-                      <td style={{ textAlign: "center" }}>{eq.pj}</td>
-                      <td style={{ textAlign: "center" }}>{eq.pg}</td>
-                      <td style={{ textAlign: "center" }}>{eq.pe}</td>
-                      <td style={{ textAlign: "center" }}>{eq.pp}</td>
-                      <td style={{ textAlign: "center" }}>{eq.gf}</td>
-                      <td style={{ textAlign: "center" }}>{eq.gc}</td>
-                      <td style={{ textAlign: "center", color: eq.dg >= 0 ? "#3fb950" : "#f85149", fontWeight: 700 }}>
+                      <td className={styles.tdPts}>{eq.puntos}</td>
+                      <td>{eq.pj}</td>
+                      <td>{eq.pg}</td>
+                      <td>{eq.pe}</td>
+                      <td>{eq.pp}</td>
+                      <td>{eq.gf}</td>
+                      <td>{eq.gc}</td>
+                      <td className={eq.dg >= 0 ? styles.pos : styles.neg}>
                         {eq.dg >= 0 ? "+" : ""}{eq.dg}
                       </td>
                     </tr>

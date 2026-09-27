@@ -4,6 +4,17 @@ const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
+// GET /api/prode/faltantes/:fecha_id - Cuántos partidos faltan pronosticar
+router.get('/faltantes/:fecha_id', authMiddleware, (req, res) => {
+  const result = db.prepare(`
+    SELECT COUNT(*) AS faltantes
+    FROM partidos p
+    LEFT JOIN pronosticos pr ON pr.partido_id = p.id AND pr.usuario_id = ?
+    WHERE p.fecha_id = ? AND p.estado = 'pendiente' AND pr.id IS NULL
+  `).get(req.usuario.id, req.params.fecha_id);
+  res.json({ faltantes: result.faltantes });
+});
+
 // GET /api/prode/partido/:partido_id - Ver mi pronóstico para un partido
 router.get('/partido/:partido_id', authMiddleware, (req, res) => {
   const pronostico = db.prepare(`
@@ -34,7 +45,7 @@ router.post('/partido/:partido_id', authMiddleware, (req, res) => {
 
   // Verificar que el prode está abierto
   const partido = db.prepare(`
-    SELECT p.estado, f.prode_abierto
+    SELECT p.estado, p.fecha_hora, f.prode_abierto
     FROM partidos p
     JOIN fechas f ON f.id = p.fecha_id
     WHERE p.id = ?
@@ -43,6 +54,15 @@ router.post('/partido/:partido_id', authMiddleware, (req, res) => {
   if (!partido) return res.status(404).json({ error: 'Partido no encontrado' });
   if (!partido.prode_abierto) return res.status(403).json({ error: 'El prode para esta fecha está cerrado' });
   if (partido.estado !== 'pendiente') return res.status(403).json({ error: 'El partido ya comenzó o finalizó' });
+
+  if (partido.fecha_hora) {
+    const matchTime = new Date(partido.fecha_hora);
+    const now = new Date();
+    const diffMs = matchTime - now;
+    if (diffMs <= 10 * 60000) {
+      return res.status(403).json({ error: 'No se puede cargar el pronóstico a menos de 10 minutos del inicio del partido' });
+    }
+  }
 
   db.prepare(`
     INSERT INTO pronosticos (usuario_id, partido_id, goles_local, goles_visita)

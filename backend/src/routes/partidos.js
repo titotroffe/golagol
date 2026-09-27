@@ -210,6 +210,21 @@ router.post('/:id/escritorio', authMiddleware, soloAdmin, (req, res) => {
 });
 
 // ─────────────────────────────────────────
+// ADMIN: PUT /api/partidos/:id/horario
+// Actualizar horario y cancha de un partido
+// ─────────────────────────────────────────
+router.put('/:id/horario', authMiddleware, adminOReportero, (req, res) => {
+  const { fecha_hora, cancha } = req.body;
+  const partido_id = req.params.id;
+
+  db.prepare(`
+    UPDATE partidos SET fecha_hora = ?, cancha = ? WHERE id = ?
+  `).run(fecha_hora || null, cancha || null, partido_id);
+
+  res.json({ ok: true, mensaje: 'Horario y cancha actualizados' });
+});
+
+// ─────────────────────────────────────────
 // REPORTERO: POST /api/partidos/:id/evento
 // Registrar gol, tarjeta, cambio en tiempo real
 // ─────────────────────────────────────────

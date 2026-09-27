@@ -12,7 +12,15 @@
   gap: 8px;
   border-bottom: 2px solid rgba(255,255,255,0.08);
   padding-bottom: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+
+.adminTabs::-webkit-scrollbar { display: none; }
 
 .adminTab {
   background: transparent;
@@ -250,12 +258,14 @@
 .fechasScroll {
   width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.fechasScroll::-webkit-scrollbar { height: 4px; }
-.fechasScroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+.fechasScroll::-webkit-scrollbar { display: none; }
 
 .fechasTrack {
   display: inline-flex;
@@ -441,6 +451,26 @@
   margin-top: 4px;
 }
 
+.horarioRow {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 10px 0;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.horarioInput {
+  width: auto;
+  padding: 6px;
+}
+
+.horarioBtn {
+  padding: 8px;
+  font-size: 0.8rem;
+  width: auto;
+}
+
 .msg {
   color: #8b949e;
   text-align: center;
@@ -556,4 +586,13 @@
   .btnSave { padding: 4px 8px; font-size: 0.7rem; }
   
   .eventosPanel { flex-direction: column; gap: 12px; }
+  
+  .horarioRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .horarioInput, .horarioBtn {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
 }

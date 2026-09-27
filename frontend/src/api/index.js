@@ -84,6 +84,8 @@ export const partidosApi = {
     request(`/partidos/${id}/resultado`, { method: 'PUT', body: JSON.stringify(body) }),
   marcarEscritorio: (id, ganador_escritorio) =>
     request(`/partidos/${id}/escritorio`, { method: 'POST', body: JSON.stringify({ ganador_escritorio }) }),
+  actualizarHorario: (id, body) =>
+    request(`/partidos/${id}/horario`, { method: 'PUT', body: JSON.stringify(body) }),
   alineaciones: (id) => request(`/partidos/${id}/alineaciones`),
   agregarAlineacion: (id, body) =>
     request(`/partidos/${id}/alineaciones`, { method: 'POST', body: JSON.stringify(body) }),
@@ -93,6 +95,7 @@ export const partidosApi = {
 
 // ── PRODE ─────────────────────────────────────────────
 export const prodeApi = {
+  faltantes: (fechaId) => request(`/prode/faltantes/${fechaId}`),
   miPronostico: (partidoId) => request(`/prode/partido/${partidoId}`),
   guardarPronostico: (partidoId, body) =>
     request(`/prode/partido/${partidoId}`, { method: 'POST', body: JSON.stringify(body) }),

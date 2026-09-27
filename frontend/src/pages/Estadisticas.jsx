@@ -123,7 +123,7 @@ export default function Estadisticas() {
                         {j.escudo_url && (
                           <img src={j.escudo_url} alt="" style={{width: '18px', height: '18px', objectFit: 'contain'}} />
                         )}
-                        <span>{j.equipo_nombre}</span>
+                        <span className={est.equipoTextMobile}>{j.equipo_nombre}</span>
                       </div>
                     </td>
                     <td style={{textAlign: 'center', padding: '10px'}}>
@@ -182,7 +182,7 @@ export default function Estadisticas() {
                         {j.escudo_url && (
                           <img src={j.escudo_url} alt="" style={{width: '18px', height: '18px', objectFit: 'contain'}} />
                         )}
-                        <span>{j.equipo_nombre}</span>
+                        <span className={est.equipoTextMobile}>{j.equipo_nombre}</span>
                       </div>
                     </td>
                     <td style={{textAlign: 'center'}}>
@@ -229,7 +229,7 @@ export default function Estadisticas() {
                     <td style={{ padding: '10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {e.escudo_url && <img src={e.escudo_url} alt="" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />}
-                        <span style={{ fontWeight: 600 }}>{e.nombre}</span>
+                        <span className={est.equipoTextMobile} style={{ fontWeight: 600 }}>{e.nombre}</span>
                       </div>
                     </td>
                     <td style={{ textAlign: 'center', fontWeight: 700, color: '#f85149' }}>
@@ -272,7 +272,7 @@ export default function Estadisticas() {
                     <td style={{ padding: '10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {e.escudo_url && <img src={e.escudo_url} alt="" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />}
-                        <span style={{ fontWeight: 600 }}>{e.nombre}</span>
+                        <span className={est.equipoTextMobile} style={{ fontWeight: 600 }}>{e.nombre}</span>
                       </div>
                     </td>
                     <td style={{ textAlign: 'center' }}>
@@ -321,7 +321,7 @@ export default function Estadisticas() {
                     <td style={{ padding: '10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {e.escudo_url && <img src={e.escudo_url} alt="" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />}
-                        <span style={{ fontWeight: 600 }}>{e.nombre}</span>
+                        <span className={est.equipoTextMobile} style={{ fontWeight: 600 }}>{e.nombre}</span>
                       </div>
                     </td>
                     <td style={{ textAlign: 'center' }}>

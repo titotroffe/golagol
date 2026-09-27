@@ -5,6 +5,8 @@ import { useTorneoStore, useAuthStore } from '../store';
 import { Navigate, Link } from 'react-router-dom';
 import AdminHistorico from './AdminHistorico';
 import AdminSanciones from './AdminSanciones';
+import AdminHorarios from './AdminHorarios';
+import AdminPlanteles from './AdminPlanteles';
 import styles from './Admin.module.css';
 
 function PartidoAdminCard({ partido }) {
@@ -387,6 +389,18 @@ export default function Admin() {
           Carga de Resultados
         </button>
         <button
+          className={`${styles.adminTab} ${tab === 'horarios' ? styles.adminTabActive : ''}`}
+          onClick={() => setTab('horarios')}
+        >
+          Horarios
+        </button>
+        <button
+          className={`${styles.adminTab} ${tab === 'planteles' ? styles.adminTabActive : ''}`}
+          onClick={() => setTab('planteles')}
+        >
+          Planteles
+        </button>
+        <button
           className={`${styles.adminTab} ${tab === 'sanciones' ? styles.adminTabActive : ''}`}
           onClick={() => setTab('sanciones')}
         >
@@ -401,6 +415,10 @@ export default function Admin() {
       </div>
 
       {tab === 'sanciones' && <AdminSanciones />}
+
+      {tab === 'horarios' && <AdminHorarios />}
+
+      {tab === 'planteles' && <AdminPlanteles />}
 
       {tab === 'historico' && <AdminHistorico />}
 

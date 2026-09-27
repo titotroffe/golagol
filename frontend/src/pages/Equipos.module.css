@@ -168,6 +168,31 @@
   color: #c9d1d9;
 }
 
+.jugadorItemEditing {
+  grid-column: 1 / -1;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(255,255,255,0.05);
+  padding: 10px;
+}
+
+.editRow {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.editRow input {
+  flex: 1;
+  min-width: 120px;
+  background: #0d1117;
+  color: white;
+  border: 1px solid #30363d;
+  padding: 6px;
+  border-radius: 4px;
+}
+
 .jName {
   font-weight: 600;
 }

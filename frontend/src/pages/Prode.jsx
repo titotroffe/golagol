@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { torneosApi, partidosApi, prodeApi } from '../api';
-import { useTorneoStore } from '../store';
+import { useTorneoStore, useAuthStore } from '../store';
 import styles from './Prode.module.css';
+import tablaStyles from './Tabla.module.css';
 
 function PartidoProde({ partido }) {
   const queryClient = useQueryClient();
@@ -54,6 +55,10 @@ function PartidoProde({ partido }) {
 
   const isClosed = partido.estado !== 'pendiente';
   
+  const matchTime = partido.fecha_hora ? new Date(partido.fecha_hora) : null;
+  const isTooLate = matchTime ? (matchTime - new Date()) <= 10 * 60000 : false;
+  const isLocked = isClosed || isTooLate;
+  
   // Calcular clase del borde según si acertó
   let cardClass = styles.partidoCard;
   if (isClosed && pronostico && pronostico.puntos_obtenidos != null) {
@@ -64,43 +69,56 @@ function PartidoProde({ partido }) {
 
   return (
     <div className={cardClass}>
-      
-      {/* Equipo Local */}
-      <div className={`${styles.equipo} ${styles.equipoLocal}`}>
-        <span className={styles.equipoNombre}>{partido.local_nombre}</span>
-        {partido.local_escudo 
-          ? <img src={partido.local_escudo} alt="" className={styles.escudo} />
-          : <span className={styles.escudoVacio} />
-        }
+      <div className={styles.mainRow}>
+        {/* Equipo Local */}
+        <div className={`${styles.equipo} ${styles.equipoLocal}`}>
+          <span className={styles.equipoNombre}>{partido.local_nombre}</span>
+          {partido.local_escudo 
+            ? <img src={partido.local_escudo} alt="" className={styles.escudo} />
+            : <span className={styles.escudoVacio} />
+          }
+        </div>
+
+        {/* Cajas de input */}
+        <div className={styles.marcadorCol} style={{ gap: 0 }}>
+          <div className={styles.inputGroup}>
+            <input
+              type="number"
+              className={styles.inputGol}
+              value={localStr}
+              onChange={handleLocalChange}
+              disabled={isLocked || guardarMut.isPending}
+              placeholder="-"
+              min="0"
+              max="99"
+            />
+            <span className={styles.golSep}>-</span>
+            <input
+              type="number"
+              className={styles.inputGol}
+              value={visitaStr}
+              onChange={handleVisitaChange}
+              disabled={isLocked || guardarMut.isPending}
+              placeholder="-"
+              min="0"
+              max="99"
+            />
+          </div>
+        </div>
+
+        {/* Equipo Visita */}
+        <div className={`${styles.equipo} ${styles.equipoVisita}`}>
+          {partido.visita_escudo 
+            ? <img src={partido.visita_escudo} alt="" className={styles.escudo} />
+            : <span className={styles.escudoVacio} />
+          }
+          <span className={styles.equipoNombre}>{partido.visita_nombre}</span>
+        </div>
       </div>
 
-      {/* Cajas de input / resultado */}
-      <div className={styles.marcadorCol}>
-        <div className={styles.inputGroup}>
-          <input
-            type="number"
-            className={styles.inputGol}
-            value={localStr}
-            onChange={handleLocalChange}
-            disabled={isClosed || guardarMut.isPending}
-            placeholder="-"
-            min="0"
-            max="99"
-          />
-          <span className={styles.golSep}>-</span>
-          <input
-            type="number"
-            className={styles.inputGol}
-            value={visitaStr}
-            onChange={handleVisitaChange}
-            disabled={isClosed || guardarMut.isPending}
-            placeholder="-"
-            min="0"
-            max="99"
-          />
-        </div>
-        
-        {!isClosed && (localStr !== '' && visitaStr !== '') && (localStr !== pronostico?.goles_local?.toString() || visitaStr !== pronostico?.goles_visita?.toString()) && (
+      {/* Acciones y resultados extra */}
+      <div className={styles.extrasRow}>
+        {!isLocked && (localStr !== '' && visitaStr !== '') && (localStr !== pronostico?.goles_local?.toString() || visitaStr !== pronostico?.goles_visita?.toString()) && (
           <button 
             className={styles.btnSave} 
             onClick={handleSave}
@@ -108,6 +126,12 @@ function PartidoProde({ partido }) {
           >
             {guardarMut.isPending ? '...' : 'Guardar'}
           </button>
+        )}
+
+        {isTooLate && !isClosed && (
+          <div style={{ color: '#8b949e', fontSize: '0.85rem', fontWeight: 600 }}>
+            Prode cerrado (arranca pronto)
+          </div>
         )}
 
         {isClosed && (
@@ -122,23 +146,172 @@ function PartidoProde({ partido }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
 
-      {/* Equipo Visita */}
-      <div className={`${styles.equipo} ${styles.equipoVisita}`}>
-        {partido.visita_escudo 
-          ? <img src={partido.visita_escudo} alt="" className={styles.escudo} />
-          : <span className={styles.escudoVacio} />
-        }
-        <span className={styles.equipoNombre}>{partido.visita_nombre}</span>
+function ProdeRanking({ torneoId }) {
+  const { usuario } = useAuthStore();
+  const { data: ranking, isLoading } = useQuery({
+    queryKey: ['prode-ranking', torneoId],
+    queryFn: () => prodeApi.ranking(torneoId),
+  });
+
+  if (isLoading) return <p className={styles.msg}>Cargando ranking...</p>;
+  if (!ranking || ranking.length === 0) return <p className={styles.msg}>No hay puntos en este torneo.</p>;
+
+  // Find user position
+  const myRank = ranking.find(r => r.id === usuario?.id);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {myRank && (
+        <div className={styles.warningBox} style={{ borderColor: '#58a6ff', color: '#58a6ff', background: 'rgba(88, 166, 255, 0.1)' }}>
+          Te encontrás en la posición <strong>#{myRank.posicion}</strong> con <strong>{myRank.puntos}</strong> puntos.
+        </div>
+      )}
+      <div className={tablaStyles.tableOuter}>
+        <table className={tablaStyles.table}>
+          <thead>
+            <tr>
+              <th className={tablaStyles.thPos}>#</th>
+              <th className={tablaStyles.thEquipo}>Usuario</th>
+              <th className={tablaStyles.thPts}>PTS</th>
+              <th className={tablaStyles.thNum}>EX</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ranking.map((r) => (
+              <tr key={r.id} className={`${tablaStyles.row} ${r.id === usuario?.id ? styles.userMe : ''}`}>
+                <td className={tablaStyles.tdPos}>{r.posicion}</td>
+                <td className={tablaStyles.tdEquipo} style={{ fontWeight: 600 }}>{r.nombre} {r.apellido}</td>
+                <td className={tablaStyles.tdPts}>{r.puntos}</td>
+                <td>{r.exactos}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function ProdeGrupos({ torneoId }) {
+  const [codigo, setCodigo] = useState('');
+  const [nombre, setNombre] = useState('');
+  const queryClient = useQueryClient();
+
+  const { data: grupos, isLoading } = useQuery({
+    queryKey: ['prode-grupos'],
+    queryFn: () => prodeApi.misGrupos(),
+  });
+
+  const crearMut = useMutation({
+    mutationFn: () => prodeApi.crearGrupo({ nombre, torneo_id: torneoId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['prode-grupos']);
+      setNombre('');
+      alert('Grupo creado exitosamente');
+    }
+  });
+
+  const unirseMut = useMutation({
+    mutationFn: () => prodeApi.unirseGrupo(codigo),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['prode-grupos']);
+      setCodigo('');
+      alert('Te uniste al grupo exitosamente');
+    },
+    onError: (err) => alert(err.message)
+  });
+
+  if (isLoading) return <p className={styles.msg}>Cargando torneos privados...</p>;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: '250px', background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '8px' }}>
+          <h4 style={{ margin: '0 0 12px 0', color: '#c9d1d9' }}>Crear Grupo</h4>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input type="text" placeholder="Nombre del grupo" value={nombre} onChange={e => setNombre(e.target.value)} style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid #30363d', background: '#0d1117', color: 'white' }} />
+            <button onClick={() => crearMut.mutate()} disabled={!nombre || crearMut.isPending} style={{ padding: '8px 16px', background: '#238636', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Crear</button>
+          </div>
+        </div>
+
+        <div style={{ flex: 1, minWidth: '250px', background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '8px' }}>
+          <h4 style={{ margin: '0 0 12px 0', color: '#c9d1d9' }}>Unirse con Código</h4>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input type="text" placeholder="Código (ej. A1B2C3)" value={codigo} onChange={e => setCodigo(e.target.value)} style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid #30363d', background: '#0d1117', color: 'white' }} />
+            <button onClick={() => unirseMut.mutate()} disabled={!codigo || unirseMut.isPending} style={{ padding: '8px 16px', background: '#1f6feb', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Unirse</button>
+          </div>
+        </div>
       </div>
 
+      <div>
+        <h3 style={{ borderBottom: '1px solid #30363d', paddingBottom: '8px', marginBottom: '16px' }}>Mis Grupos</h3>
+        {!grupos || grupos.length === 0 ? (
+          <p className={styles.msg}>No perteneces a ningún grupo privado.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {grupos.map(g => (
+              <div key={g.id} style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '8px', overflow: 'hidden' }}>
+                <div style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid #30363d', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#58a6ff' }}>{g.nombre}</h4>
+                    <span style={{ fontSize: '0.8rem', color: '#8b949e' }}>Miembros: {g.miembros}</span>
+                  </div>
+                  <div style={{ background: '#0d1117', padding: '4px 8px', borderRadius: '4px', border: '1px dashed #58a6ff', color: '#58a6ff', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                    CÓDIGO: {g.codigo}
+                  </div>
+                </div>
+                <div style={{ padding: '16px' }}>
+                  <ProdeGrupoRanking grupoId={g.id} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
+  );
+}
+
+function ProdeGrupoRanking({ grupoId }) {
+  const { usuario } = useAuthStore();
+  const { data: ranking, isLoading } = useQuery({
+    queryKey: ['prode-grupo-ranking', grupoId],
+    queryFn: () => prodeApi.rankingGrupo(grupoId),
+  });
+
+  if (isLoading) return <p className={styles.msg}>Cargando ranking del grupo...</p>;
+  if (!ranking || ranking.length === 0) return <p className={styles.msg}>No hay datos para este grupo.</p>;
+
+  return (
+    <table className={tablaStyles.table}>
+      <thead>
+        <tr>
+          <th className={tablaStyles.thPos}>#</th>
+          <th className={tablaStyles.thEquipo}>Usuario</th>
+          <th className={tablaStyles.thPts}>PTS</th>
+        </tr>
+      </thead>
+      <tbody>
+        {ranking.map((r) => (
+          <tr key={r.id} className={`${tablaStyles.row} ${r.id === usuario?.id ? styles.userMe : ''}`}>
+            <td className={tablaStyles.tdPos}>{r.posicion}</td>
+            <td className={tablaStyles.tdEquipo} style={{ fontWeight: 600 }}>{r.nombre} {r.apellido}</td>
+            <td className={tablaStyles.tdPts}>{r.puntos}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
 export default function Prode() {
   const torneoActivo = useTorneoStore((s) => s.torneoActivo);
   const [selectedFecha, setSelectedFecha] = useState(null);
+  const [tab, setTab] = useState('pronosticos');
 
   const { data: fechas, isLoading: loadingFechas } = useQuery({
     queryKey: ['fechas', torneoActivo?.id],
@@ -146,7 +319,6 @@ export default function Prode() {
     enabled: !!torneoActivo,
   });
 
-  // Automatically select Fecha 8 or the best one
   useEffect(() => {
     if (fechas && fechas.length > 0 && !selectedFecha) {
       const validFechas = fechas.filter(f => f.numero >= 8);
@@ -159,8 +331,15 @@ export default function Prode() {
   const { data: partidos, isLoading: loadingPartidos } = useQuery({
     queryKey: ['partidos', selectedFecha?.id],
     queryFn: () => partidosApi.porFecha(selectedFecha.id),
-    enabled: !!selectedFecha,
+    enabled: !!selectedFecha && tab === 'pronosticos',
     refetchInterval: 30000,
+  });
+
+  const { data: faltantesData } = useQuery({
+    queryKey: ['prode-faltantes', selectedFecha?.id],
+    queryFn: () => prodeApi.faltantes(selectedFecha.id),
+    enabled: !!selectedFecha,
+    refetchInterval: 60000,
   });
 
   if (!torneoActivo) return <p className={styles.msg}>Seleccioná un torneo</p>;
@@ -168,41 +347,62 @@ export default function Prode() {
 
   return (
     <div className={styles.wrap}>
-
-
-      {/* Selector de Fechas (Pills horizontales) */}
-      <div className={styles.fechasScroll}>
-        <div className={styles.fechasTrack}>
-          {fechas?.filter(f => f.numero >= 8).map(f => (
-            <button
-              key={f.id}
-              className={`${styles.fechaPill} ${selectedFecha?.id === f.id ? styles.fechaActive : ''}`}
-              onClick={() => setSelectedFecha(f)}
-            >
-              F{f.numero}
-            </button>
-          ))}
-        </div>
+      
+      <div className={styles.tabs}>
+        <button className={`${styles.tab} ${tab === 'pronosticos' ? styles.tabActive : ''}`} onClick={() => setTab('pronosticos')}>
+          Pronósticos
+        </button>
+        <button className={`${styles.tab} ${tab === 'ranking' ? styles.tabActive : ''}`} onClick={() => setTab('ranking')}>
+          Ranking Global
+        </button>
+        <button className={`${styles.tab} ${tab === 'grupos' ? styles.tabActive : ''}`} onClick={() => setTab('grupos')}>
+          Torneos Privados
+        </button>
       </div>
 
-      {/* Leyenda */}
-      <div className={styles.leyenda}>
-        <span className={styles.badgeExacto}>+6 Pleno</span>
-        <span className={styles.badgeSigno}>+3 Resultado</span>
-      </div>
+      {tab === 'ranking' && <ProdeRanking torneoId={torneoActivo.id} />}
+      {tab === 'grupos' && <ProdeGrupos torneoId={torneoActivo.id} />}
 
-      {/* Lista de partidos de la fecha para pronosticar */}
-      <div className={styles.partidosList}>
-        {loadingPartidos && <p className={styles.msg}>Cargando partidos...</p>}
-        
-        {!loadingPartidos && partidos?.length === 0 && (
-          <p className={styles.msg}>No hay partidos cargados en esta fecha.</p>
-        )}
+      {tab === 'pronosticos' && (
+        <>
+          {faltantesData && faltantesData.faltantes > 0 && (
+            <div className={styles.warningBox}>
+              ⚠️ Tenés <strong>{faltantesData.faltantes}</strong> partidos pendientes de pronosticar para la fecha seleccionada. ¡No te olvides de cargarlos!
+            </div>
+          )}
 
-        {!loadingPartidos && partidos?.map(p => (
-          <PartidoProde key={p.id} partido={p} />
-        ))}
-      </div>
+          <div className={styles.fechasScroll}>
+            <div className={styles.fechasTrack}>
+              {fechas?.filter(f => f.numero >= 8).map(f => (
+                <button
+                  key={f.id}
+                  className={`${styles.fechaPill} ${selectedFecha?.id === f.id ? styles.fechaActive : ''}`}
+                  onClick={() => setSelectedFecha(f)}
+                >
+                  F{f.numero}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.leyenda}>
+            <span className={styles.badgeExacto}>+6 Pleno</span>
+            <span className={styles.badgeSigno}>+3 Resultado</span>
+          </div>
+
+          <div className={styles.partidosList}>
+            {loadingPartidos && <p className={styles.msg}>Cargando partidos...</p>}
+            
+            {!loadingPartidos && partidos?.length === 0 && (
+              <p className={styles.msg}>No hay partidos cargados en esta fecha.</p>
+            )}
+
+            {!loadingPartidos && partidos?.map(p => (
+              <PartidoProde key={p.id} partido={p} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

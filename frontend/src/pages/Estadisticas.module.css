@@ -281,6 +281,8 @@
   color: #8b949e;
 }
 
+.showMobile { display: none; }
+
 @media (max-width: 600px) {
   .simPartidoRow {
     grid-template-columns: 1fr 42px 8px 42px 1fr;
@@ -288,4 +290,13 @@
     gap: 4px;
   }
   .simEquipo { font-size: 0.75rem; }
+  .equipoTextMobile { display: none; }
+  .hideMobile { display: none; }
+  .showMobile { display: inline; }
+  .table th, .table td {
+    padding: 8px 4px !important;
+  }
+  .table th.thNum { width: 42px !important; }
+  .table th.thEquipo { width: 36px !important; }
+  .table th.thJugador { width: auto !important; }
 }
