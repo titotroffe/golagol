@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ui/ProtectedRoute';
 
 import Login from './pages/Login';
 import Registro from './pages/Registro';
+import RecuperarPassword from './pages/RecuperarPassword';
 import Tabla from './pages/Tabla';
 import Fixture from './pages/Fixture';
 import Prode from './pages/Prode';
@@ -35,26 +36,31 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           {/* Rutas públicas */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/registro" element={<Registro />} />
+          {/* Rutas con Layout */}
+          <Route element={<Layout />}>
+            {/* Rutas Públicas */}
+            <Route path="/login"       element={<Login />} />
+            <Route path="/registro"    element={<Registro />} />
+            <Route path="/recuperar"   element={<RecuperarPassword />} />
+            <Route path="/"            element={<Inicio />} />
+            <Route path="/tabla"       element={<Tabla />} />
+            <Route path="/equipos"     element={<Equipos />} />
+            <Route path="/fixture"     element={<Fixture />} />
+            <Route path="/estadisticas" element={<Estadisticas />} />
+            <Route path="/sancionados" element={<Sancionados />} />
+            <Route path="/simular"     element={<Simular />} />
 
-          {/* Rutas protegidas dentro del Layout */}
-          <Route element={<ProtectedRoute />}>
-            <Route element={<Layout />}>
-              <Route path="/"            element={<Inicio />} />
-              <Route path="/tabla"       element={<Tabla />} />
+            {/* Rutas Protegidas */}
+            <Route element={<ProtectedRoute />}>
               <Route path="/prode"       element={<Prode />} />
-              <Route path="/equipos"     element={<Equipos />} />
-              <Route path="/fixture"     element={<Fixture />} />
-              <Route path="/estadisticas" element={<Estadisticas />} />
-              <Route path="/sancionados" element={<Sancionados />} />
-              <Route path="/simular"     element={<Simular />} />
               <Route path="/perfil"      element={<Perfil />} />
               <Route path="/admin"       element={<Admin />} />
               <Route path="/admin/sanciones" element={<AdminSanciones />} />
             </Route>
+          </Route>
 
-            {/* Vistas protegidas a PANTALLA COMPLETA (sin Sidebar) */}
+          {/* Vistas protegidas a PANTALLA COMPLETA (sin Sidebar) */}
+          <Route element={<ProtectedRoute />}>
             <Route path="/admin/partido/:id" element={<GolAGol />} />
           </Route>
         </Routes>

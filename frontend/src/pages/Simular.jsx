@@ -151,7 +151,7 @@ export default function Simular() {
           </div>
         )}
 
-        <div className={est.btnRow}>
+        <div className={est.btnRow} style={{ marginTop: '16px' }}>
           <button
             className={est.btnSimular}
             onClick={() => simularMut.mutate()}
@@ -178,14 +178,14 @@ export default function Simular() {
                   <tr>
                     <th className={styles.thPos}>#</th>
                     <th className={styles.thEquipo}>Equipo</th>
-                    <th className={styles.thPts}>PTS</th>
-                    <th className={styles.thNum}>PJ</th>
-                    <th className={styles.thNum}>PG</th>
-                    <th className={styles.thNum}>PE</th>
-                    <th className={styles.thNum}>PP</th>
-                    <th className={styles.thNum}>GF</th>
-                    <th className={styles.thNum}>GC</th>
-                    <th className={styles.thNum}>DG</th>
+                    <th className={styles.thPts} title="Puntos">PTS.</th>
+                    <th className={styles.thNum} title="Partidos Jugados">PJ</th>
+                    <th className={styles.thNum} title="Partidos Ganados">PG</th>
+                    <th className={styles.thNum} title="Partidos Empatados">PE</th>
+                    <th className={styles.thNum} title="Partidos Perdidos">PP</th>
+                    <th className={styles.thNum} title="Goles a Favor">GF</th>
+                    <th className={styles.thNum} title="Goles en Contra">GC</th>
+                    <th className={styles.thDifCol} title="Diferencia de Gol">DIF</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -205,8 +205,8 @@ export default function Simular() {
                       <td>{eq.pp}</td>
                       <td>{eq.gf}</td>
                       <td>{eq.gc}</td>
-                      <td className={eq.dg >= 0 ? styles.pos : styles.neg}>
-                        {eq.dg >= 0 ? "+" : ""}{eq.dg}
+                      <td className={`${styles.tdDif} ${eq.dg > 0 ? styles.pos : eq.dg < 0 ? styles.neg : ''}`}>
+                        {eq.dg > 0 ? "+" : ""}{eq.dg}
                       </td>
                     </tr>
                   ))}

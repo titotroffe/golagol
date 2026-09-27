@@ -63,7 +63,7 @@ export default function Layout() {
             </div>
 
             {/* Menú usuario */}
-            {usuario && (
+            {usuario ? (
               <div className={styles.userMenu}>
                 <button
                   className={styles.userBtn}
@@ -116,6 +116,13 @@ export default function Layout() {
                   </>
                 )}
               </div>
+            ) : (
+              <button 
+                className={styles.loginBtn}
+                onClick={() => navigate('/login')}
+              >
+                Login
+              </button>
             )}
 
             {/* Burger Menu Button (Mobile Only) */}

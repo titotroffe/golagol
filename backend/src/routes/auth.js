@@ -80,4 +80,27 @@ router.post('/login', (req, res) => {
   });
 });
 
+// ─────────────────────────────────────────
+// POST /api/auth/recuperar
+// (Simulación simple: si coincide usuario y email, permite cambiar la contraseña directamente)
+// ─────────────────────────────────────────
+router.post('/recuperar', (req, res) => {
+  const { usuario, email, newPassword } = req.body;
+
+  if (!usuario || !email || !newPassword) {
+    return res.status(400).json({ error: 'Todos los campos son requeridos' });
+  }
+
+  const user = db.prepare('SELECT id FROM usuarios WHERE usuario = ? AND email = ?').get(usuario, email);
+  
+  if (!user) {
+    return res.status(404).json({ error: 'No existe una cuenta con ese usuario y correo electrónico' });
+  }
+
+  const hash = bcrypt.hashSync(newPassword, 10);
+  db.prepare('UPDATE usuarios SET password_hash = ? WHERE id = ?').run(hash, user.id);
+
+  res.json({ mensaje: 'Contraseña actualizada con éxito' });
+});
+
 module.exports = router;

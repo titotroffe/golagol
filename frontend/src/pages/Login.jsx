@@ -63,7 +63,10 @@ export default function Login() {
           </button>
 
           <p className={styles.linkText}>
-            ¿No tenés cuenta? <Link to="/registro" className={styles.link}>Registrarse</Link>
+            ¿No tenés cuenta? <Link to="/registro" className={styles.link}>Registrate</Link>
+          </p>
+          <p className={styles.linkText} style={{ marginTop: '-4px' }}>
+            ¿Olvidaste la contraseña? <Link to="/recuperar" className={styles.link}>Recuperala</Link>
           </p>
         </form>
       </div>

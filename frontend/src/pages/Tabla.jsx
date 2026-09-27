@@ -36,37 +36,44 @@ export default function Tabla() {
               <th className={styles.thNum} title="Partidos Perdidos">PP</th>
               <th className={styles.thNum} title="Goles a Favor">GF</th>
               <th className={styles.thNum} title="Goles en Contra">GC</th>
+              <th className={styles.thDifCol} title="Diferencia de Gol">DIF</th>
             </tr>
           </thead>
           <tbody>
-            {tabla.map((eq, idx) => (
-              <tr
-                key={eq.equipo_id}
-                className={styles.row}
-              >
-                <td className={`${styles.tdPos} ${idx < 8 ? styles.posPlayoff : ''}`}>
-                  {eq.posicion}
-                </td>
+            {tabla.map((eq, idx) => {
+              const dif = (eq.gf || 0) - (eq.gc || 0);
+              return (
+                <tr
+                  key={eq.equipo_id}
+                  className={styles.row}
+                >
+                  <td className={`${styles.tdPos} ${idx < 8 ? styles.posPlayoff : ''}`}>
+                    {eq.posicion}
+                  </td>
 
-                <td className={styles.tdEquipo}>
-                  <div className={styles.equipoWrap}>
-                    {eq.escudo_url
-                      ? <img src={eq.escudo_url} alt="" className={styles.escudo} />
-                      : <span className={styles.escudoVacio} />
-                    }
-                    <span className={styles.equipoNombre}>{eq.nombre}</span>
-                  </div>
-                </td>
+                  <td className={styles.tdEquipo}>
+                    <div className={styles.equipoWrap}>
+                      {eq.escudo_url
+                        ? <img src={eq.escudo_url} alt="" className={styles.escudo} />
+                        : <span className={styles.escudoVacio} />
+                      }
+                      <span className={styles.equipoNombre}>{eq.nombre}</span>
+                    </div>
+                  </td>
 
-                <td className={styles.tdPts}>{eq.puntos}</td>
-                <td>{eq.pj || 0}</td>
-                <td>{eq.pg || 0}</td>
-                <td>{eq.pe || 0}</td>
-                <td>{eq.pp || 0}</td>
-                <td>{eq.gf || 0}</td>
-                <td>{eq.gc || 0}</td>
-              </tr>
-            ))}
+                  <td className={styles.tdPts}>{eq.puntos}</td>
+                  <td>{eq.pj || 0}</td>
+                  <td>{eq.pg || 0}</td>
+                  <td>{eq.pe || 0}</td>
+                  <td>{eq.pp || 0}</td>
+                  <td>{eq.gf || 0}</td>
+                  <td>{eq.gc || 0}</td>
+                  <td className={`${styles.tdDif} ${dif > 0 ? styles.pos : dif < 0 ? styles.neg : ''}`}>
+                    {dif > 0 ? `+${dif}` : dif}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -138,6 +138,23 @@
   color: #6e7681;
 }
 
+.loginBtn {
+  background: #238636;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.loginBtn:hover {
+  background: #2ea043;
+}
+
 /* Overlay + Dropdown */
 .overlay {
   position: fixed;
@@ -243,7 +260,7 @@
   padding: 16px 14px;
 }
 
-/* En pantallas grandes, centrar y limitar ancho */
+/* En pantallas grandes, limitar padding si es necesario */
 @media (min-width: 800px) {
   .main {
     max-width: 860px;

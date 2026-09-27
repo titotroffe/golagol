@@ -96,6 +96,7 @@
 .thEquipo { text-align: left !important; }
 .thNum   { width: 34px; text-align: center; font-size: 0.7rem; }
 .thPts   { width: 42px; color: #d29922 !important; text-align: center; font-size: 0.75rem; }
+.thDifCol { width: 42px; text-align: center; font-size: 0.7rem; }
 
 .tdPos {
   font-weight: 700;
@@ -156,6 +157,11 @@
 .pos { color: #3fb950; font-weight: 700; }
 .neg { color: #f85149; font-weight: 700; }
 
+.tdDif {
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
 /* ─────────────────────────────
    LEYENDA
 ───────────────────────────── */
@@ -201,6 +207,7 @@
   .thNum { width: 24px; }
   .thPts { width: 30px; font-size: 0.7rem; }
   .thPos { width: 24px; font-size: 0.7rem; }
+  .thDifCol { width: 30px; }
   
   .tdPts { font-size: 0.75rem; }
   .tdPos { font-size: 0.65rem; }

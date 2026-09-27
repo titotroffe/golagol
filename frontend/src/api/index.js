@@ -35,6 +35,7 @@ async function request(path, options = {}) {
 export const authApi = {
   login: (body) => request('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   registro: (body) => request('/auth/registro', { method: 'POST', body: JSON.stringify(body) }),
+  recuperarPassword: (body) => request('/auth/recuperar', { method: 'POST', body: JSON.stringify(body) }),
 };
 
 // ── USUARIOS ──────────────────────────────────────────
