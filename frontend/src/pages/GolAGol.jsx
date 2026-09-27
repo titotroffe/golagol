@@ -14,7 +14,8 @@ function EquipoPanel({
   agregarAlineacionMut, 
   eliminarAlineacionMut,
   registrarEventoMut,
-  isAdmin
+  isAdmin,
+  tiempoActual
 }) {
   const equipoId = esLocal ? partido.equipo_local_id : partido.equipo_visita_id;
   const nombre = esLocal ? partido.local_nombre : partido.visita_nombre;
@@ -88,7 +89,7 @@ function EquipoPanel({
       equipo_id: equipoId,
       jugador_id: jugadorId,
       detalle: detalleObj ? JSON.stringify(detalleObj) : '',
-      minuto: actionForm.minuto ? parseInt(actionForm.minuto) : 0,
+      minuto: actionForm.minuto ? parseInt(actionForm.minuto) : (tiempoActual?.mins || 0),
     });
   };
 
@@ -217,8 +218,9 @@ function EquipoPanel({
         <div className={styles.teamActionsBtnGroup}>
           <button onClick={()=>setPendingAction('GOL')} className={styles.btnTeamAction}>Gol</button>
           <button onClick={() => {
-            const minStr = prompt("¿En qué minuto es el penal?");
-            registrarEventoMut.mutate({tipo: 'PENAL_A_FAVOR', equipo_id: equipoId, detalle: esLocal ? 'Local' : 'Visita', minuto: parseInt(minStr) || 0});
+            const currentMin = tiempoActual?.mins || 0;
+            const minStr = prompt("¿En qué minuto es el penal?", currentMin.toString());
+            registrarEventoMut.mutate({tipo: 'PENAL_A_FAVOR', equipo_id: equipoId, detalle: esLocal ? 'Local' : 'Visita', minuto: parseInt(minStr) || currentMin});
             setPendingAction('PATEAR_PENAL');
           }} className={styles.btnTeamAction}>Penal</button>
           <button onClick={()=>setPendingAction('AMARILLA')} className={styles.btnTeamAction}>Amarilla</button>
@@ -456,6 +458,7 @@ export default function GolAGol() {
           eliminarAlineacionMut={eliminarAlin}
           registrarEventoMut={regEvento}
           isAdmin={isAdmin}
+          tiempoActual={tiempoState}
         />
         
         {/* PANEL CENTRAL: EVENTOS RECIENTES Y CONTROLES DE PARTIDO */}
@@ -543,6 +546,7 @@ export default function GolAGol() {
           eliminarAlineacionMut={eliminarAlin}
           registrarEventoMut={regEvento}
           isAdmin={isAdmin}
+          tiempoActual={tiempoState}
         />
       </div>
 
