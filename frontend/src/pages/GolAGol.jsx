@@ -37,8 +37,10 @@ function EquipoPanel({
     let rojas = 0;
     let haSalido = false;
     let haEntrado = false;
+    let goles = 0;
 
     eventos.forEach(ev => {
+      if ((ev.tipo === 'GOL' || ev.tipo === 'GOL_PENAL') && ev.jugador_id === jId) goles++;
       if (ev.tipo === 'AMARILLA' && ev.jugador_id === jId) amarillas++;
       if (ev.tipo === 'ROJA' && ev.jugador_id === jId) rojas++;
       if (ev.tipo === 'CAMBIO') {
@@ -60,7 +62,7 @@ function EquipoPanel({
     // Un jugador no puede jugar si fue expulsado, si ya salió, o si es suplente y aún no entró
     const inhabilitado = expulsado || haSalido || (esSuplente && !haEntrado);
 
-    return { amarillas, rojas, expulsado, haSalido, haEntrado, inhabilitado };
+    return { amarillas, rojas, expulsado, haSalido, haEntrado, inhabilitado, goles };
   };
 
   // Filtrar plantel para los selects (solo los que no están ya alineados)
@@ -251,7 +253,7 @@ function EquipoPanel({
         
         <ul className={styles.lista}>
           {titulares.map(t => {
-            const { amarillas, expulsado, haSalido, inhabilitado } = estadoJugador(t.jugador_id, false);
+            const { amarillas, expulsado, haSalido, inhabilitado, goles } = estadoJugador(t.jugador_id, false);
             
             // Suplentes que todavía NO entraron y NO fueron expulsados
             const suplentesDisponiblesParaEntrar = suplentes.filter(s => {
@@ -264,6 +266,7 @@ function EquipoPanel({
                 <div className={styles.jInfo}>
                   <span className={styles.dorsal}>{t.dorsal}</span>
                   <span className={styles.nombre}>{t.apellido || t.nombre}</span>
+                  {goles > 0 && <span style={{ fontSize: '0.8rem', marginLeft: '2px' }}>{'⚽'.repeat(goles)}</span>}
                   {amarillas === 1 && !expulsado && <span className={styles.tagAmarilla}>🟨</span>}
                   {expulsado && <span className={styles.tagRoja}>🟥</span>}
                   {haSalido && <span className={styles.tagSub}>⬇️ Salió</span>}
@@ -294,12 +297,13 @@ function EquipoPanel({
         
         <ul className={styles.lista}>
           {suplentes.map(s => {
-            const { amarillas, expulsado, haEntrado, inhabilitado } = estadoJugador(s.jugador_id, true);
+            const { amarillas, expulsado, haEntrado, inhabilitado, goles } = estadoJugador(s.jugador_id, true);
             return (
               <li key={s.id} className={`${styles.jItem} ${expulsado ? styles.jInhabilitado : ''}`}>
                 <div className={styles.jInfo}>
                   <span className={styles.dorsal}>{s.dorsal}</span>
                   <span className={styles.nombre}>{s.apellido || s.nombre}</span>
+                  {goles > 0 && <span style={{ fontSize: '0.8rem', marginLeft: '2px' }}>{'⚽'.repeat(goles)}</span>}
                   {amarillas === 1 && !expulsado && <span className={styles.tagAmarilla}>🟨</span>}
                   {expulsado && <span className={styles.tagRoja}>🟥</span>}
                   {haEntrado && <span className={styles.tagSub}>⬆️ Jugando</span>}
@@ -400,7 +404,7 @@ export default function GolAGol() {
   });
 
   const cambiarEstadoMut = useMutation({
-    mutationFn: ({ estado, motivo }) => partidosApi.cambiarEstado(id, { estado, motivo }),
+    mutationFn: ({ estado, motivo, minuto }) => partidosApi.cambiarEstado(id, { estado, motivo, minuto }),
     onSuccess: () => queryClient.invalidateQueries(['partido', id])
   });
 
@@ -569,10 +573,10 @@ export default function GolAGol() {
         <div className={styles.feedCol}>
           {isAdmin && (
             <div className={styles.matchControls}>
-              <button onClick={() => regEvento.mutate({tipo: 'INICIO_PARTIDO', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Inicio 1T</button>
-              <button onClick={() => regEvento.mutate({tipo: 'FIN_1T', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Fin 1T</button>
-              <button onClick={() => regEvento.mutate({tipo: 'INICIO_2T', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Inicio 2T</button>
-              <button onClick={() => regEvento.mutate({tipo: 'FIN_PARTIDO', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Fin Partido</button>
+              <button onClick={() => regEvento.mutate({tipo: 'INICIO_PARTIDO', equipo_id: null, detalle: '', minuto: tiempoState.mins})} className={styles.btnMatchState}>Inicio 1T</button>
+              <button onClick={() => regEvento.mutate({tipo: 'FIN_1T', equipo_id: null, detalle: '', minuto: tiempoState.mins})} className={styles.btnMatchState}>Fin 1T</button>
+              <button onClick={() => regEvento.mutate({tipo: 'INICIO_2T', equipo_id: null, detalle: '', minuto: tiempoState.mins})} className={styles.btnMatchState}>Inicio 2T</button>
+              <button onClick={() => regEvento.mutate({tipo: 'FIN_PARTIDO', equipo_id: null, detalle: '', minuto: tiempoState.mins})} className={styles.btnMatchState}>Fin Partido</button>
               
               {partido.estado !== 'suspendido' && partido.estado !== 'finalizado' && (
                 <button 
@@ -611,7 +615,7 @@ export default function GolAGol() {
                     className={styles.btnMatchState}
                     onClick={() => {
                       if (tiempoExtraInput) {
-                        regEvento.mutate({tipo: 'TIEMPO_EXTRA', equipo_id: null, detalle: tiempoExtraInput});
+                        regEvento.mutate({tipo: 'TIEMPO_EXTRA', equipo_id: null, detalle: tiempoExtraInput, minuto: tiempoState.mins});
                         setTiempoExtraInput('');
                         setShowTiempoExtra(false);
                       }
@@ -686,14 +690,17 @@ export default function GolAGol() {
                     </div>
                     <div className={styles.evDetails}>
                       <strong>
-                        {ev.tipo === 'CAMBIO' ? `Salió ${ev.jugador_apellido || ev.jugador_nombre}` : 
-                         ev.tipo === 'TIEMPO_EXTRA' ? `Adición: +${ev.detalle} min` :
-                         ev.tipo === 'PENAL_A_FAVOR' ? `Penal para ${ev.equipo_nombre}` :
-                         ev.tipo === 'PENAL_ERRADO' ? `${ev.jugador_apellido || ev.jugador_nombre} (Erró Penal)` :
-                         ev.tipo === 'PENAL_ATAJADO' ? `${ev.jugador_apellido || ev.jugador_nombre} (Penal Atajado)` :
-                         ev.tipo === 'GOL_PENAL' ? `${ev.jugador_apellido || ev.jugador_nombre} (Gol de Penal)` :
-                         ev.tipo.startsWith('INICIO') || ev.tipo.startsWith('FIN') ? ev.tipo.replace('_', ' ') :
-                         (ev.jugador_apellido || ev.jugador_nombre)}
+                        {(() => {
+                          const nombreCompleto = ev.jugador_nombre && ev.jugador_apellido ? `${ev.jugador_nombre} ${ev.jugador_apellido}` : (ev.jugador_nombre || ev.jugador_apellido || '');
+                          if (ev.tipo === 'CAMBIO') return `Salió ${nombreCompleto}`;
+                          if (ev.tipo === 'TIEMPO_EXTRA') return `Adición: +${ev.detalle} min`;
+                          if (ev.tipo === 'PENAL_A_FAVOR') return `Penal para ${ev.equipo_nombre}`;
+                          if (ev.tipo === 'PENAL_ERRADO') return `${nombreCompleto} (Erró Penal)`;
+                          if (ev.tipo === 'PENAL_ATAJADO') return `${nombreCompleto} (Penal Atajado)`;
+                          if (ev.tipo === 'GOL_PENAL') return `${nombreCompleto} (Gol de Penal)`;
+                          if (ev.tipo.startsWith('INICIO') || ev.tipo.startsWith('FIN')) return ev.tipo.replace('_', ' ');
+                          return nombreCompleto;
+                        })()}
                       </strong>
                       {subText && <span className={styles.evSubText}>{subText}</span>}
                       {ev.equipo_nombre && <span className={styles.evTeam}>({ev.equipo_nombre})</span>}
