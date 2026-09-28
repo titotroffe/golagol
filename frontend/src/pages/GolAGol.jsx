@@ -685,7 +685,21 @@ export default function GolAGol() {
           {activeTab === 'eventos' && (
             <>
               <div className={styles.feedScroll}>
-                {partido.eventos?.slice().reverse().map(ev => {
+                {(() => {
+                  if (!partido.eventos) return null;
+                  const fin1T = partido.eventos.find(e => e.tipo === 'FIN_1T');
+                  const fin1TId = fin1T ? fin1T.id : Infinity;
+
+                  const eventosOrdenados = [...partido.eventos].sort((a, b) => {
+                    const tiempoA = a.id <= fin1TId ? 1 : 2;
+                    const tiempoB = b.id <= fin1TId ? 1 : 2;
+                    
+                    if (tiempoA !== tiempoB) return tiempoB - tiempoA; // DESC (2T > 1T)
+                    if (a.minuto !== b.minuto) return (b.minuto || 0) - (a.minuto || 0); // DESC
+                    return b.id - a.id; // DESC
+                  });
+
+                  return eventosOrdenados.map(ev => {
                   let subText = '';
                   if (ev.tipo === 'CAMBIO' && ev.detalle && ev.detalle.startsWith('{')) {
                     try {
@@ -753,7 +767,8 @@ export default function GolAGol() {
                       )}
                     </motion.div>
                   );
-                })}
+                })
+              })()}
                 {(!partido.eventos || partido.eventos.length === 0) && (
                   <p className={styles.msg}>Aún no hay eventos registrados.</p>
                 )}
