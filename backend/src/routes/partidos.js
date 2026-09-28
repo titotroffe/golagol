@@ -51,6 +51,36 @@ router.get('/fecha/:fecha_id', (req, res) => {
   res.json(partidos);
 });
 
+// GET /api/partidos/:id/pulso - Porcentajes de apuestas
+router.get('/:id/pulso', (req, res) => {
+  const { id } = req.params;
+  try {
+    const pronosticos = db.prepare('SELECT goles_local, goles_visita FROM pronosticos WHERE partido_id = ?').all(id);
+    
+    const total = pronosticos.length;
+    if (total === 0) {
+      return res.json({ total: 0, local: 0, empate: 0, visita: 0 });
+    }
+
+    let local = 0, empate = 0, visita = 0;
+    pronosticos.forEach(p => {
+      if (p.goles_local > p.goles_visita) local++;
+      else if (p.goles_local < p.goles_visita) visita++;
+      else empate++;
+    });
+
+    res.json({
+      total,
+      local: Math.round((local / total) * 100),
+      empate: Math.round((empate / total) * 100),
+      visita: Math.round((visita / total) * 100),
+    });
+  } catch (err) {
+    console.error('Error calculando pulso:', err);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
 // ─────────────────────────────────────────
 // ALINEACIONES
 // ─────────────────────────────────────────
@@ -459,9 +489,11 @@ router.delete('/:id/evento/:evento_id', authMiddleware, adminOReportero, (req, r
 router.get('/:id/chat', (req, res) => {
   const mensajes = db.prepare(`
     SELECT c.id, c.mensaje, c.enviado_en, c.color,
-           u.nombre, u.apellido, u.usuario, u.avatar_url
+           u.nombre, u.apellido, u.usuario, u.avatar_url,
+           e.nombre AS equipo_favorito
     FROM partidos_chat c
     JOIN usuarios u ON u.id = c.usuario_id
+    LEFT JOIN equipos e ON e.id = u.equipo_id
     WHERE c.partido_id = ?
     ORDER BY c.enviado_en ASC
   `).all(req.params.id);
@@ -482,9 +514,11 @@ router.post('/:id/chat', authMiddleware, (req, res) => {
 
   const nuevoMensaje = db.prepare(`
     SELECT c.id, c.mensaje, c.enviado_en, c.color,
-           u.nombre, u.apellido, u.usuario, u.avatar_url
+           u.nombre, u.apellido, u.usuario, u.avatar_url,
+           e.nombre AS equipo_favorito
     FROM partidos_chat c
     JOIN usuarios u ON u.id = c.usuario_id
+    LEFT JOIN equipos e ON e.id = u.equipo_id
     WHERE c.id = ?
   `).get(result.lastInsertRowid);
 

@@ -46,9 +46,12 @@
 .logoBall { font-size: 1.25rem; line-height: 1; }
 
 .logoText {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 800;
-  color: #f0f6fc;
+  background: linear-gradient(to right, #ffffff, #85b8ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 20px rgba(88, 166, 255, 0.4);
   white-space: nowrap;
 }
 
@@ -142,20 +145,24 @@
 }
 
 .loginBtn {
-  background: #238636;
+  background: rgba(0, 85, 255, 0.2);
+  backdrop-filter: blur(10px);
   color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 14px;
+  border: 1px solid rgba(88, 166, 255, 0.3);
+  box-shadow: 0 0 10px rgba(0, 85, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 6px 16px;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.15s;
+  transition: all 0.2s ease;
 }
 
 .loginBtn:hover {
-  background: #2ea043;
+  background: rgba(0, 85, 255, 0.4);
+  box-shadow: 0 0 20px rgba(0, 85, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 /* Overlay + Dropdown */

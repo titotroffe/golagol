@@ -77,7 +77,7 @@ export default function Estadisticas() {
       </div>
 
       {tab === 'goleadores' && (
-      <section className={est.section}>
+      <section key="goleadores" className={est.section}>
         <div className={est.secHead}>
           <span className={est.secTitle}>Goleadores</span>
           <span className={est.secSub}>Top anotadores del torneo</span>
@@ -151,7 +151,7 @@ export default function Estadisticas() {
       )}
 
       {tab === 'expulsados' && (
-      <section className={est.section}>
+      <section key="expulsados" className={est.section}>
         <div className={est.secHead}>
           <span className={est.secTitle}>Expulsados</span>
           <span className={est.secSub}>Jugadores con tarjeta roja en el torneo</span>
@@ -216,7 +216,7 @@ export default function Estadisticas() {
       )}
 
       {tab === 'mas_expulsados' && (
-      <section className={est.section}>
+      <section key="mas_expulsados" className={est.section}>
         <div className={est.secHead}>
           <span className={est.secTitle}>Equipos Más Expulsados</span>
           <span className={est.secSub}>Clubes con más tarjetas rojas en el torneo</span>
@@ -275,7 +275,7 @@ export default function Estadisticas() {
       )}
 
       {tab === 'mas_goleador' && (
-      <section className={est.section}>
+      <section key="mas_goleador" className={est.section}>
         <div className={est.secHead}>
           <span className={est.secTitle}>Equipos Más Goleadores</span>
           <span className={est.secSub}>Clubes con más goles a favor</span>
@@ -330,7 +330,7 @@ export default function Estadisticas() {
       )}
 
       {tab === 'menos_vencido' && (
-      <section className={est.section}>
+      <section key="menos_vencido" className={est.section}>
         <div className={est.secHead}>
           <span className={est.secTitle}>Valla Menos Vencida</span>
           <span className={est.secSub}>Clubes con menos goles en contra</span>

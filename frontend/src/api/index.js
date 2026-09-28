@@ -89,6 +89,7 @@ export const torneosApi = {
 // ── PARTIDOS ──────────────────────────────────────────
 export const partidosApi = {
   detalle: (id) => request(`/partidos/${id}`),
+  pulso: (id) => request(`/partidos/${id}/pulso`),
   porFecha: (fechaId) => request(`/partidos/fecha/${fechaId}`),
   registrarEvento: (id, body) =>
     request(`/partidos/${id}/evento`, { method: 'POST', body: JSON.stringify(body) }),

@@ -1,6 +1,16 @@
+@keyframes fadeUpIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .wrap { display: flex; flex-direction: column; gap: 24px; }
 
-.section { display: flex; flex-direction: column; gap: 12px; }
+.section { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px; 
+  animation: fadeUpIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
 .secHead {
   display: flex;
@@ -54,10 +64,15 @@
 
 .row {
   border-bottom: 1px solid rgba(255,255,255,0.05);
-  transition: background 0.1s;
+  transition: all 0.2s ease;
+  position: relative;
 }
 .row:last-child { border-bottom: none; }
-.row:hover { background: rgba(255,255,255,0.03); }
+.row:hover { 
+  background: rgba(88, 166, 255, 0.08); 
+  box-shadow: inset 3px 0 0 #58a6ff;
+  transform: translateX(2px);
+}
 
 .table td {
   padding: 10px 10px;
@@ -194,19 +209,23 @@
 }
 
 .btnSimular {
-  background: linear-gradient(135deg, #1f6feb, #388bfd);
-  border: none;
+  background: rgba(0, 85, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(88, 166, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 85, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   color: white;
   border-radius: 8px;
   padding: 11px 22px;
   font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .btnSimular:hover:not(:disabled) {
-  background: linear-gradient(135deg, #388bfd, #58a6ff);
+  background: rgba(0, 85, 255, 0.4);
+  box-shadow: 0 0 25px rgba(0, 85, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
 }
 
 .btnSimular:disabled { opacity: 0.6; cursor: not-allowed; }

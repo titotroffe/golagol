@@ -1,23 +1,29 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { usuariosApi } from '../api';
+import { usuariosApi, equiposApi } from '../api';
 import { useAuthStore } from '../store';
 import styles from './Perfil.module.css';
 
 export default function Perfil() {
   const queryClient = useQueryClient();
   const updateAuthUser = useAuthStore(s => s.updateUsuario);
-  
+
   const { data: perfil, isLoading } = useQuery({
     queryKey: ['perfil'],
     queryFn: usuariosApi.perfil
+  });
+
+  const { data: equipos = [] } = useQuery({
+    queryKey: ['equipos'],
+    queryFn: equiposApi.listar
   });
 
   const [form, setForm] = useState({
     nombre: '',
     apellido: '',
     email: '',
-    fecha_nacimiento: ''
+    fecha_nacimiento: '',
+    equipo_id: ''
   });
 
   const [passForm, setPassForm] = useState({
@@ -35,7 +41,8 @@ export default function Perfil() {
         nombre: perfil.nombre || '',
         apellido: perfil.apellido || '',
         email: perfil.email || '',
-        fecha_nacimiento: perfil.fecha_nacimiento || ''
+        fecha_nacimiento: perfil.fecha_nacimiento || '',
+        equipo_id: perfil.equipo_id || ''
       });
     }
   }, [perfil]);
@@ -134,7 +141,7 @@ export default function Perfil() {
       {error && <div className={styles.errorMsg}>{error}</div>}
 
       <div className={styles.grid}>
-        
+
         {/* AVATAR SECTION */}
         <section className={styles.card}>
           <h2 className={styles.cardTitle}>Foto de Perfil</h2>
@@ -151,11 +158,11 @@ export default function Perfil() {
             <div className={styles.avatarActions}>
               <label className={styles.btnSubir}>
                 Subir nueva foto
-                <input 
-                  type="file" 
-                  accept="image/jpeg, image/png, image/webp" 
-                  onChange={handleAvatarChange} 
-                  style={{ display: 'none' }} 
+                <input
+                  type="file"
+                  accept="image/jpeg, image/png, image/webp"
+                  onChange={handleAvatarChange}
+                  style={{ display: 'none' }}
                 />
               </label>
               <p className={styles.avatarHint}>Recomendado: 200x200px, máx 5MB.</p>
@@ -171,45 +178,61 @@ export default function Perfil() {
               <label>Usuario</label>
               <input type="text" value={perfil.usuario} disabled className={styles.inputDisabled} />
             </div>
-            
+
             <div className={styles.formRow}>
               <div className={styles.formGroup}>
                 <label>Nombre</label>
-                <input 
-                  type="text" 
-                  value={form.nombre} 
-                  onChange={e => setForm({...form, nombre: e.target.value})} 
-                  required 
+                <input
+                  type="text"
+                  value={form.nombre}
+                  onChange={e => setForm({ ...form, nombre: e.target.value })}
+                  required
                 />
               </div>
               <div className={styles.formGroup}>
                 <label>Apellido</label>
-                <input 
-                  type="text" 
-                  value={form.apellido} 
-                  onChange={e => setForm({...form, apellido: e.target.value})} 
-                  required 
+                <input
+                  type="text"
+                  value={form.apellido}
+                  onChange={e => setForm({ ...form, apellido: e.target.value })}
+                  required
                 />
               </div>
             </div>
 
-            <div className={styles.formGroup}>
-              <label>Email</label>
-              <input 
-                type="email" 
-                value={form.email} 
-                onChange={e => setForm({...form, email: e.target.value})} 
-                required 
-              />
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={e => setForm({ ...form, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Hincha de</label>
+                <select
+                  value={form.equipo_id}
+                  onChange={e => setForm({ ...form, equipo_id: e.target.value })}
+                  className={styles.selectJ}
+                  style={{ background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', padding: '10px 12px', color: '#c9d1d9', fontSize: '0.9rem' }}
+                >
+                  <option value="">-- Sin equipo --</option>
+                  {equipos.map(eq => (
+                    <option key={eq.id} value={eq.id}>{eq.nombre}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className={styles.formGroup}>
               <label>Fecha de Nacimiento</label>
-              <input 
-                type="date" 
-                value={form.fecha_nacimiento} 
-                onChange={e => setForm({...form, fecha_nacimiento: e.target.value})} 
-                required 
+              <input
+                type="date"
+                value={form.fecha_nacimiento}
+                onChange={e => setForm({ ...form, fecha_nacimiento: e.target.value })}
+                required
               />
             </div>
 
@@ -225,30 +248,30 @@ export default function Perfil() {
           <form className={styles.form} onSubmit={handlePassSubmit}>
             <div className={styles.formGroup}>
               <label>Contraseña Actual</label>
-              <input 
-                type="password" 
-                value={passForm.currentPassword} 
-                onChange={e => setPassForm({...passForm, currentPassword: e.target.value})} 
-                required 
+              <input
+                type="password"
+                value={passForm.currentPassword}
+                onChange={e => setPassForm({ ...passForm, currentPassword: e.target.value })}
+                required
               />
             </div>
             <div className={styles.formGroup}>
               <label>Nueva Contraseña</label>
-              <input 
-                type="password" 
-                value={passForm.newPassword} 
-                onChange={e => setPassForm({...passForm, newPassword: e.target.value})} 
-                required 
+              <input
+                type="password"
+                value={passForm.newPassword}
+                onChange={e => setPassForm({ ...passForm, newPassword: e.target.value })}
+                required
                 minLength="6"
               />
             </div>
             <div className={styles.formGroup}>
               <label>Confirmar Nueva Contraseña</label>
-              <input 
-                type="password" 
-                value={passForm.confirmPassword} 
-                onChange={e => setPassForm({...passForm, confirmPassword: e.target.value})} 
-                required 
+              <input
+                type="password"
+                value={passForm.confirmPassword}
+                onChange={e => setPassForm({ ...passForm, confirmPassword: e.target.value })}
+                required
                 minLength="6"
               />
             </div>

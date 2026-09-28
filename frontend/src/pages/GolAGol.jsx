@@ -1,18 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { partidosApi, equiposApi } from '../api';
-import { useAuthStore } from '../store';
+import { useAuthStore, useToastStore } from '../store';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './GolAGol.module.css';
 
-function EquipoPanel({ 
-  esLocal, 
-  partido, 
-  alineaciones, 
-  plantel, 
-  agregarAlineacionMut, 
+function EquipoPanel({
+  esLocal,
+  partido,
+  alineaciones,
+  plantel,
+  agregarAlineacionMut,
   eliminarAlineacionMut,
   registrarEventoMut,
   isAdmin,
@@ -20,7 +21,7 @@ function EquipoPanel({
 }) {
   const equipoId = esLocal ? partido.equipo_local_id : partido.equipo_visita_id;
   const nombre = esLocal ? partido.local_nombre : partido.visita_nombre;
-  
+
   const [pendingAction, setPendingAction] = useState(null);
   const [actionForm, setActionForm] = useState({});
   // Filtrar alineaciones de este equipo
@@ -30,7 +31,7 @@ function EquipoPanel({
 
   // Eventos de este partido para validaciones
   const eventos = partido.eventos || [];
-  
+
   // Calcular estado del jugador
   const estadoJugador = (jId, esSuplente = false) => {
     let amarillas = 0;
@@ -45,13 +46,13 @@ function EquipoPanel({
       if (ev.tipo === 'ROJA' && ev.jugador_id === jId) rojas++;
       if (ev.tipo === 'CAMBIO') {
         if (ev.jugador_id === jId) haSalido = true;
-        
+
         // El detalle guarda {"entra_id": ID}
         if (ev.detalle && ev.detalle.startsWith('{')) {
           try {
             const data = JSON.parse(ev.detalle);
             if (data.entra_id === jId) haEntrado = true;
-          } catch(e){
+          } catch (e) {
             console.warn('Error parseando detalle de evento CAMBIO:', e);
           }
         }
@@ -77,7 +78,7 @@ function EquipoPanel({
     let dorsalCalc = 1;
     if (tipo === 'titular') dorsalCalc = titulares.length + 1;
     if (tipo === 'suplente') dorsalCalc = 11 + suplentes.length + 1;
-    
+
     agregarAlineacionMut.mutate({
       equipo_id: equipoId,
       jugador_id: parseInt(jId, 10),
@@ -114,9 +115,9 @@ function EquipoPanel({
       const entraId = parseInt(actionForm.entraId, 10);
       if (!entraId) return;
       const entraSuplente = suplentes.find(s => s.jugador_id === entraId);
-      handleAction(actionForm.jugadorId, 'CAMBIO', { 
-        entra_id: entraId, 
-        entra_nombre: entraSuplente ? `${entraSuplente.nombre} ${entraSuplente.apellido}` : 'Jugador' 
+      handleAction(actionForm.jugadorId, 'CAMBIO', {
+        entra_id: entraId,
+        entra_nombre: entraSuplente ? `${entraSuplente.nombre} ${entraSuplente.apellido}` : 'Jugador'
       });
     } else if (pendingAction === 'PATEAR_PENAL') {
       const res = penalOverride || actionForm.resultado; // 1, 2, 3
@@ -127,7 +128,7 @@ function EquipoPanel({
       // GOL, AMARILLA, ROJA
       handleAction(actionForm.jugadorId, pendingAction);
     }
-    
+
     setPendingAction(null);
     setActionForm({});
   };
@@ -153,11 +154,11 @@ function EquipoPanel({
           </h4>
           <button onClick={() => setPendingAction(null)} className={styles.btnRemove}>X</button>
         </div>
-        
+
         <div className={styles.actionFormBody}>
-          <select 
-            value={actionForm.jugadorId || ''} 
-            onChange={e => setActionForm({...actionForm, jugadorId: parseInt(e.target.value)})}
+          <select
+            value={actionForm.jugadorId || ''}
+            onChange={e => setActionForm({ ...actionForm, jugadorId: parseInt(e.target.value) })}
             className={styles.selectJ}
           >
             <option value="">-- Seleccionar Jugador --</option>
@@ -166,19 +167,19 @@ function EquipoPanel({
             ))}
           </select>
 
-          <input 
-            type="number" 
-            placeholder="Minuto (ej: 45)" 
-            value={actionForm.minuto || ''} 
-            onChange={e => setActionForm({...actionForm, minuto: e.target.value})}
+          <input
+            type="number"
+            placeholder="Minuto (ej: 45)"
+            value={actionForm.minuto || ''}
+            onChange={e => setActionForm({ ...actionForm, minuto: e.target.value })}
             className={styles.selectJ}
             style={{ marginTop: '8px', marginBottom: '8px' }}
           />
 
           {pendingAction === 'CAMBIO' && (
-            <select 
-              value={actionForm.entraId || ''} 
-              onChange={e => setActionForm({...actionForm, entraId: parseInt(e.target.value)})}
+            <select
+              value={actionForm.entraId || ''}
+              onChange={e => setActionForm({ ...actionForm, entraId: parseInt(e.target.value) })}
               className={styles.selectJ}
             >
               <option value="">-- Entra suplente --</option>
@@ -193,16 +194,16 @@ function EquipoPanel({
 
           {pendingAction === 'PATEAR_PENAL' ? (
             <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-              <button onClick={() => executeAction('1')} className={styles.btnConfirmAction} disabled={!actionForm.jugadorId} style={{flex: 1}}>GOL</button>
-              <button onClick={() => executeAction('2')} className={styles.btnConfirmAction} disabled={!actionForm.jugadorId} style={{flex: 1, backgroundColor: '#da3633'}}>ERRADO</button>
-              <button onClick={() => executeAction('3')} className={styles.btnConfirmAction} disabled={!actionForm.jugadorId} style={{flex: 1, backgroundColor: '#bf8700'}}>ATAJADO</button>
+              <button onClick={() => executeAction('1')} className={styles.btnConfirmAction} disabled={!actionForm.jugadorId} style={{ flex: 1 }}>GOL</button>
+              <button onClick={() => executeAction('2')} className={styles.btnConfirmAction} disabled={!actionForm.jugadorId} style={{ flex: 1, backgroundColor: '#da3633' }}>ERRADO</button>
+              <button onClick={() => executeAction('3')} className={styles.btnConfirmAction} disabled={!actionForm.jugadorId} style={{ flex: 1, backgroundColor: '#bf8700' }}>ATAJADO</button>
             </div>
           ) : (
-            <button 
-              onClick={() => executeAction()} 
+            <button
+              onClick={() => executeAction()}
               className={styles.btnConfirmAction}
               disabled={
-                !actionForm.jugadorId || 
+                !actionForm.jugadorId ||
                 (pendingAction === 'CAMBIO' && !actionForm.entraId)
               }
             >
@@ -216,12 +217,12 @@ function EquipoPanel({
 
   return (
     <div className={styles.equipoCol}>
-      <h2 
-        className={styles.eqTitle} 
-        style={{ 
-          margin: 0, 
-          whiteSpace: 'nowrap', 
-          overflow: 'hidden', 
+      <h2
+        className={styles.eqTitle}
+        style={{
+          margin: 0,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
           textOverflow: 'ellipsis',
           fontSize: '1rem'
         }}
@@ -232,15 +233,15 @@ function EquipoPanel({
 
       {isAdmin && (
         <div className={styles.teamActionsBtnGroup}>
-          <button onClick={()=>setPendingAction('GOL')} className={styles.btnTeamAction}>Gol</button>
+          <button onClick={() => setPendingAction('GOL')} className={styles.btnTeamAction}>Gol</button>
           <button onClick={() => {
             const currentMin = tiempoActual?.mins || 0;
-            registrarEventoMut.mutate({tipo: 'PENAL_A_FAVOR', equipo_id: equipoId, detalle: esLocal ? 'Local' : 'Visita', minuto: currentMin});
+            registrarEventoMut.mutate({ tipo: 'PENAL_A_FAVOR', equipo_id: equipoId, detalle: esLocal ? 'Local' : 'Visita', minuto: currentMin });
             setPendingAction('PATEAR_PENAL');
           }} className={styles.btnTeamAction}>Penal</button>
-          <button onClick={()=>setPendingAction('AMARILLA')} className={styles.btnTeamAction}>Amarilla</button>
-          <button onClick={()=>setPendingAction('ROJA')} className={styles.btnTeamAction}>Roja</button>
-          <button onClick={()=>setPendingAction('CAMBIO')} className={styles.btnTeamAction}>Cambio</button>
+          <button onClick={() => setPendingAction('AMARILLA')} className={styles.btnTeamAction}>Amarilla</button>
+          <button onClick={() => setPendingAction('ROJA')} className={styles.btnTeamAction}>Roja</button>
+          <button onClick={() => setPendingAction('CAMBIO')} className={styles.btnTeamAction}>Cambio</button>
         </div>
       )}
 
@@ -250,11 +251,11 @@ function EquipoPanel({
         <div className={styles.secHeader}>
           <span className={styles.secHeading}>Titulares</span>
         </div>
-        
+
         <ul className={styles.lista}>
           {titulares.map(t => {
             const { amarillas, expulsado, haSalido, inhabilitado, goles } = estadoJugador(t.jugador_id, false);
-            
+
             // Suplentes que todavía NO entraron y NO fueron expulsados
             const suplentesDisponiblesParaEntrar = suplentes.filter(s => {
               const est = estadoJugador(s.jugador_id, true);
@@ -294,7 +295,7 @@ function EquipoPanel({
         <div className={styles.secHeader}>
           <span className={styles.secHeading}>Suplentes</span>
         </div>
-        
+
         <ul className={styles.lista}>
           {suplentes.map(s => {
             const { amarillas, expulsado, haEntrado, inhabilitado, goles } = estadoJugador(s.jugador_id, true);
@@ -330,12 +331,42 @@ function EquipoPanel({
   );
 }
 
+function PulsoDelPartido({ partidoId, localNombre, visitaNombre }) {
+  const { data: pulso, isLoading } = useQuery({
+    queryKey: ['pulso', partidoId],
+    queryFn: () => partidosApi.pulso(partidoId),
+    refetchInterval: 30000,
+  });
+
+  if (isLoading || !pulso || pulso.total === 0) return null;
+
+  return (
+    <div className={styles.pulsoWidget}>
+      <h4 className={styles.pulsoTitle}>📊 Predicciones del Prode ({pulso.total} votos)</h4>
+      <div className={styles.pulsoBarContainer}>
+        {pulso.local > 0 && <div className={styles.pulsoBarLocal} style={{ width: `${pulso.local}%` }}>{pulso.local}% {localNombre}</div>}
+        {pulso.empate > 0 && <div className={styles.pulsoBarEmpate} style={{ width: `${pulso.empate}%` }}>{pulso.empate}% E</div>}
+        {pulso.visita > 0 && <div className={styles.pulsoBarVisita} style={{ width: `${pulso.visita}%` }}>{pulso.visita}% {visitaNombre}</div>}
+      </div>
+    </div>
+  );
+}
 
 export default function GolAGol() {
   const { id } = useParams();
   const queryClient = useQueryClient();
   const currentUser = useAuthStore(s => s.usuario);
   const isAdmin = currentUser?.rol === 'admin';
+  const [activeChatTooltip, setActiveChatTooltip] = useState({ id: null, x: 0, y: 0, text: '' });
+
+  useEffect(() => {
+    if (activeChatTooltip.id) {
+      const timer = setTimeout(() => {
+        setActiveChatTooltip({ id: null, x: 0, y: 0, text: '' });
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [activeChatTooltip.id]);
 
   useWebSocket((msg) => {
     // Cuando entra un evento por websocket, invalidamos las queries para refrescar
@@ -419,7 +450,7 @@ export default function GolAGol() {
   const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [motivoSuspension, setMotivoSuspension] = useState('');
   const [minutoReanudacion, setMinutoReanudacion] = useState('');
-  
+
   const [activeTab, setActiveTab] = useState('eventos');
   const [chatInput, setChatInput] = useState('');
   const [chatColor, setChatColor] = useState('#58a6ff');
@@ -437,9 +468,9 @@ export default function GolAGol() {
 
     const interval = setInterval(() => {
       const evs = partido.eventos;
-      const inicio1T   = evs.find(e => e.tipo === 'INICIO_PARTIDO');
-      const fin1T      = evs.find(e => e.tipo === 'FIN_1T');
-      const inicio2T   = evs.find(e => e.tipo === 'INICIO_2T');
+      const inicio1T = evs.find(e => e.tipo === 'INICIO_PARTIDO');
+      const fin1T = evs.find(e => e.tipo === 'FIN_1T');
+      const inicio2T = evs.find(e => e.tipo === 'INICIO_2T');
       const finPartido = evs.find(e => e.tipo === 'FIN_PARTIDO');
       let totalSecs = 0;
       let running = false;
@@ -447,11 +478,11 @@ export default function GolAGol() {
       let isHalftime = false;
       let isFinished = false;
       let currentExtraTime = null;
-      
+
       const now = Date.now();
 
       // Procesar eventos cronológicamente para calcular el tiempo neto
-      const evsChronological = [...partido.eventos].sort((a,b) => new Date(a.registrado_en) - new Date(b.registrado_en));
+      const evsChronological = [...partido.eventos].sort((a, b) => new Date(a.registrado_en) - new Date(b.registrado_en));
       const fueSuspendido = evsChronological.some(e => e.tipo === 'SUSPENSION');
 
       evsChronological.forEach(ev => {
@@ -494,7 +525,7 @@ export default function GolAGol() {
                 if (d.forzar_minuto !== null && d.forzar_minuto !== undefined) {
                   totalSecs = parseInt(d.forzar_minuto, 10) * 60;
                 }
-              } catch (e) {}
+              } catch (e) { }
             }
           }
         } else if (ev.tipo === 'TIEMPO_EXTRA') {
@@ -533,7 +564,7 @@ export default function GolAGol() {
 
   return (
     <div className={styles.wrap}>
-      
+
       {/* HEADER MARCADOR EN VIVO */}
       <div className={styles.marcadorTop}>
         <Link to={isAdmin ? "/admin" : "/"} className={styles.btnBack}>← Volver</Link>
@@ -558,38 +589,43 @@ export default function GolAGol() {
         </div>
         <div className={styles.estadoIndicator} style={
           partido.estado === 'en_curso' ? { color: '#ff4d4f', textShadow: '0 0 8px rgba(255, 77, 79, 0.8)' } :
-          partido.estado === 'suspendido' ? { color: '#ff7b72' } :
-          { color: '#8b949e' }
+            partido.estado === 'suspendido' ? { color: '#ff7b72' } :
+              { color: '#8b949e' }
         }>
           {partido.estado === 'en_curso' && <div className={styles.liveDot} />}
-          {partido.estado === 'pendiente' ? 'Esperando inicio' : 
-           partido.estado === 'en_curso' ? 'EN VIVO' : 
-           partido.estado === 'suspendido' ? 'SUSPENDIDO' : 'FINALIZADO'}
+          {partido.estado === 'pendiente' ? 'Esperando inicio' :
+            partido.estado === 'en_curso' ? 'EN VIVO' :
+              partido.estado === 'suspendido' ? 'SUSPENDIDO' : 'FINALIZADO'}
         </div>
       </div>
 
       <div className={styles.mainLayout}>
         {/* PANEL CENTRAL: EVENTOS RECIENTES Y CONTROLES DE PARTIDO */}
         <div className={styles.feedCol}>
+          <PulsoDelPartido
+            partidoId={id}
+            localNombre={partido.local_nombre}
+            visitaNombre={partido.visita_nombre}
+          />
           {isAdmin && (
             <div className={styles.matchControls}>
-              <button onClick={() => regEvento.mutate({tipo: 'INICIO_PARTIDO', equipo_id: null, detalle: '', minuto: tiempoState.mins})} className={styles.btnMatchState}>Inicio 1T</button>
-              <button onClick={() => regEvento.mutate({tipo: 'FIN_1T', equipo_id: null, detalle: '', minuto: tiempoState.mins})} className={styles.btnMatchState}>Fin 1T</button>
-              <button onClick={() => regEvento.mutate({tipo: 'INICIO_2T', equipo_id: null, detalle: '', minuto: tiempoState.mins})} className={styles.btnMatchState}>Inicio 2T</button>
-              <button onClick={() => regEvento.mutate({tipo: 'FIN_PARTIDO', equipo_id: null, detalle: '', minuto: tiempoState.mins})} className={styles.btnMatchState}>Fin Partido</button>
-              
+              <button onClick={() => regEvento.mutate({ tipo: 'INICIO_PARTIDO', equipo_id: null, detalle: '', minuto: tiempoState.mins })} className={styles.btnMatchState}>Inicio 1T</button>
+              <button onClick={() => regEvento.mutate({ tipo: 'FIN_1T', equipo_id: null, detalle: '', minuto: tiempoState.mins })} className={styles.btnMatchState}>Fin 1T</button>
+              <button onClick={() => regEvento.mutate({ tipo: 'INICIO_2T', equipo_id: null, detalle: '', minuto: tiempoState.mins })} className={styles.btnMatchState}>Inicio 2T</button>
+              <button onClick={() => regEvento.mutate({ tipo: 'FIN_PARTIDO', equipo_id: null, detalle: '', minuto: tiempoState.mins })} className={styles.btnMatchState}>Fin Partido</button>
+
               {partido.estado !== 'suspendido' && partido.estado !== 'finalizado' && (
-                <button 
-                  onClick={() => setShowSuspendModal(true)} 
-                  className={styles.btnMatchState} 
+                <button
+                  onClick={() => setShowSuspendModal(true)}
+                  className={styles.btnMatchState}
                   style={{ background: '#4c1d1d', borderColor: '#f85149' }}
                 >
                   Suspender
                 </button>
               )}
               {partido.estado === 'suspendido' && (
-                <button 
-                  onClick={() => setShowSuspendModal(true)} 
+                <button
+                  onClick={() => setShowSuspendModal(true)}
                   className={styles.btnMatchState}
                   style={{ background: '#1b4a24', borderColor: '#238636' }}
                 >
@@ -615,7 +651,7 @@ export default function GolAGol() {
                     className={styles.btnMatchState}
                     onClick={() => {
                       if (tiempoExtraInput) {
-                        regEvento.mutate({tipo: 'TIEMPO_EXTRA', equipo_id: null, detalle: tiempoExtraInput, minuto: tiempoState.mins});
+                        regEvento.mutate({ tipo: 'TIEMPO_EXTRA', equipo_id: null, detalle: tiempoExtraInput, minuto: tiempoState.mins });
                         setTiempoExtraInput('');
                         setShowTiempoExtra(false);
                       }
@@ -632,13 +668,13 @@ export default function GolAGol() {
           )}
 
           <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-            <button 
+            <button
               onClick={() => setActiveTab('eventos')}
               style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid', borderColor: activeTab === 'eventos' ? '#3fb950' : '#30363d', background: activeTab === 'eventos' ? 'rgba(63, 185, 80, 0.15)' : 'transparent', color: activeTab === 'eventos' ? '#3fb950' : '#8b949e', fontWeight: 700, cursor: 'pointer' }}
             >
               ⏱ Eventos
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('chat')}
               style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid', borderColor: activeTab === 'chat' ? '#58a6ff' : '#30363d', background: activeTab === 'chat' ? 'rgba(88, 166, 255, 0.15)' : 'transparent', color: activeTab === 'chat' ? '#58a6ff' : '#8b949e', fontWeight: 700, cursor: 'pointer' }}
             >
@@ -650,79 +686,79 @@ export default function GolAGol() {
             <>
               <div className={styles.feedScroll}>
                 {partido.eventos?.slice().reverse().map(ev => {
-              let subText = '';
-              if (ev.tipo === 'CAMBIO' && ev.detalle && ev.detalle.startsWith('{')) {
-                try {
-                  const d = JSON.parse(ev.detalle);
-                  subText = `Entró ${d.entra_nombre}`;
-                } catch(e) {}
-              }
-              if ((ev.tipo === 'SUSPENSION' || ev.tipo === 'REANUDACION') && ev.detalle && ev.detalle.startsWith('{')) {
-                try {
-                  const d = JSON.parse(ev.detalle);
-                  subText = d.motivo || '';
-                } catch(e) {}
-              }
+                  let subText = '';
+                  if (ev.tipo === 'CAMBIO' && ev.detalle && ev.detalle.startsWith('{')) {
+                    try {
+                      const d = JSON.parse(ev.detalle);
+                      subText = `Entró ${d.entra_nombre}`;
+                    } catch (e) { }
+                  }
+                  if ((ev.tipo === 'SUSPENSION' || ev.tipo === 'REANUDACION') && ev.detalle && ev.detalle.startsWith('{')) {
+                    try {
+                      const d = JSON.parse(ev.detalle);
+                      subText = d.motivo || '';
+                    } catch (e) { }
+                  }
 
-              return (
-                <motion.div 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  key={ev.id} 
-                  className={styles.evCard}
-                >
-                  <div className={styles.evCardMain}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '35px' }}>
-                      <span className={styles.evIcon}>
-                        {ev.tipo === 'GOL' || ev.tipo === 'GOL_PENAL' ? '⚽' : 
-                         ev.tipo === 'PENAL_A_FAVOR' ? '🎯' : 
-                         ev.tipo === 'PENAL_ERRADO' ? '❌' : 
-                         ev.tipo === 'PENAL_ATAJADO' ? '🧤' : 
-                         ev.tipo === 'AMARILLA' ? '🟨' : 
-                         ev.tipo === 'ROJA' ? '🟥' : 
-                         ev.tipo === 'CAMBIO' ? '🔄' : 
-                         ev.tipo === 'TIEMPO_EXTRA' ? '➕' :
-                         ev.tipo.startsWith('INICIO') || ev.tipo.startsWith('FIN') ? '⏱' : '▪️'}
-                      </span>
-                      {ev.minuto != null && ev.minuto > 0 && (
-                        <span style={{ fontSize: '0.7rem', color: '#8b949e', fontWeight: 800, marginTop: '2px' }}>{ev.minuto}'</span>
-                      )}
-                    </div>
-                    <div className={styles.evDetails}>
-                      <strong>
-                        {(() => {
-                          const nombreCompleto = ev.jugador_nombre && ev.jugador_apellido ? `${ev.jugador_nombre} ${ev.jugador_apellido}` : (ev.jugador_nombre || ev.jugador_apellido || '');
-                          if (ev.tipo === 'CAMBIO') return `Salió ${nombreCompleto}`;
-                          if (ev.tipo === 'TIEMPO_EXTRA') return `Adición: +${ev.detalle} min`;
-                          if (ev.tipo === 'PENAL_A_FAVOR') return `Penal para ${ev.equipo_nombre}`;
-                          if (ev.tipo === 'PENAL_ERRADO') return `${nombreCompleto} (Erró Penal)`;
-                          if (ev.tipo === 'PENAL_ATAJADO') return `${nombreCompleto} (Penal Atajado)`;
-                          if (ev.tipo === 'GOL_PENAL') return `${nombreCompleto} (Gol de Penal)`;
-                          if (ev.tipo.startsWith('INICIO') || ev.tipo.startsWith('FIN')) return ev.tipo.replace('_', ' ');
-                          return nombreCompleto;
-                        })()}
-                      </strong>
-                      {subText && <span className={styles.evSubText}>{subText}</span>}
-                      {ev.equipo_nombre && <span className={styles.evTeam}>({ev.equipo_nombre})</span>}
-                    </div>
-                  </div>
-                  {isAdmin && (
-                    <button 
-                      title="Eliminar evento" 
-                      onClick={() => setEventoToDelete(ev)}
-                      className={styles.btnDeleteEvent}
+                  return (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      key={ev.id}
+                      className={styles.evCard}
                     >
-                      🗑️
-                    </button>
-                  )}
-                </motion.div>
-              );
-            })}
-            {(!partido.eventos || partido.eventos.length === 0) && (
-              <p className={styles.msg}>Aún no hay eventos registrados.</p>
-            )}
-          </div>
-          </>
+                      <div className={styles.evCardMain}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '35px' }}>
+                          <span className={styles.evIcon}>
+                            {ev.tipo === 'GOL' || ev.tipo === 'GOL_PENAL' ? '⚽' :
+                              ev.tipo === 'PENAL_A_FAVOR' ? '🎯' :
+                                ev.tipo === 'PENAL_ERRADO' ? '❌' :
+                                  ev.tipo === 'PENAL_ATAJADO' ? '🧤' :
+                                    ev.tipo === 'AMARILLA' ? '🟨' :
+                                      ev.tipo === 'ROJA' ? '🟥' :
+                                        ev.tipo === 'CAMBIO' ? '🔄' :
+                                          ev.tipo === 'TIEMPO_EXTRA' ? '➕' :
+                                            ev.tipo.startsWith('INICIO') || ev.tipo.startsWith('FIN') ? '⏱' : '▪️'}
+                          </span>
+                          {ev.minuto != null && ev.minuto > 0 && (
+                            <span style={{ fontSize: '0.7rem', color: '#8b949e', fontWeight: 800, marginTop: '2px' }}>{ev.minuto}'</span>
+                          )}
+                        </div>
+                        <div className={styles.evDetails}>
+                          <strong>
+                            {(() => {
+                              const nombreCompleto = ev.jugador_nombre && ev.jugador_apellido ? `${ev.jugador_nombre} ${ev.jugador_apellido}` : (ev.jugador_nombre || ev.jugador_apellido || '');
+                              if (ev.tipo === 'CAMBIO') return `Salió ${nombreCompleto}`;
+                              if (ev.tipo === 'TIEMPO_EXTRA') return `Adición: +${ev.detalle} min`;
+                              if (ev.tipo === 'PENAL_A_FAVOR') return `Penal para ${ev.equipo_nombre}`;
+                              if (ev.tipo === 'PENAL_ERRADO') return `${nombreCompleto} (Erró Penal)`;
+                              if (ev.tipo === 'PENAL_ATAJADO') return `${nombreCompleto} (Penal Atajado)`;
+                              if (ev.tipo === 'GOL_PENAL') return `${nombreCompleto} (Gol de Penal)`;
+                              if (ev.tipo.startsWith('INICIO') || ev.tipo.startsWith('FIN')) return ev.tipo.replace('_', ' ');
+                              return nombreCompleto;
+                            })()}
+                          </strong>
+                          {subText && <span className={styles.evSubText}>{subText}</span>}
+                          {ev.equipo_nombre && <span className={styles.evTeam}>({ev.equipo_nombre})</span>}
+                        </div>
+                      </div>
+                      {isAdmin && (
+                        <button
+                          title="Eliminar evento"
+                          onClick={() => setEventoToDelete(ev)}
+                          className={styles.btnDeleteEvent}
+                        >
+                          🗑️
+                        </button>
+                      )}
+                    </motion.div>
+                  );
+                })}
+                {(!partido.eventos || partido.eventos.length === 0) && (
+                  <p className={styles.msg}>Aún no hay eventos registrados.</p>
+                )}
+              </div>
+            </>
           )}
 
           {activeTab === 'chat' && (
@@ -731,11 +767,11 @@ export default function GolAGol() {
                 <AnimatePresence>
                   {chatMensajes.map(m => {
                     return (
-                      <motion.div 
+                      <motion.div
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        key={m.id} 
-                        style={{ 
+                        key={m.id}
+                        style={{
                           padding: '4px 8px',
                           fontSize: '0.85rem',
                           display: 'flex',
@@ -747,9 +783,31 @@ export default function GolAGol() {
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                       >
                         <span style={{ color: '#8b949e', fontSize: '0.7rem', flexShrink: 0 }}>
-                          {new Date(m.enviado_en).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          {new Date(m.enviado_en).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
-                        <strong style={{ color: m.color || '#58a6ff', whiteSpace: 'nowrap' }}>{m.usuario}</strong>
+                        <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                          <strong
+                            onClick={(e) => {
+                              if (activeChatTooltip.id === m.id) {
+                                setActiveChatTooltip({ id: null, x: 0, y: 0, text: '' });
+                              } else {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                // Usar el borde izquierdo del texto o donde hizo tap para asegurar alineación en móviles
+                                const clickX = e.clientX || rect.left + rect.width / 2;
+                                setActiveChatTooltip({
+                                  id: m.id,
+                                  x: clickX,
+                                  y: rect.top,
+                                  text: m.equipo_favorito ? `Hincha de ${m.equipo_favorito}` : 'Sin equipo'
+                                });
+                              }
+                            }}
+                            style={{ color: m.color || '#58a6ff', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                          >
+                            {m.usuario}
+                          </strong>
+                          <span style={{ color: '#e6edf3', marginRight: '4px' }}>:</span>
+                        </div>
                         <span style={{ color: '#e6edf3', wordBreak: 'break-word', lineHeight: '1.4' }}>{m.mensaje}</span>
                       </motion.div>
                     );
@@ -759,7 +817,7 @@ export default function GolAGol() {
                   <p className={styles.msg} style={{ color: '#8b949e' }}>No hay mensajes todavía. ¡Sé el primero en comentar!</p>
                 )}
               </div>
-              <form 
+              <form
                 onSubmit={e => {
                   e.preventDefault();
                   if (!chatInput.trim()) return;
@@ -769,14 +827,14 @@ export default function GolAGol() {
                 style={{ display: 'flex', gap: '8px', marginTop: '12px', alignItems: 'center' }}
               >
                 <div style={{ position: 'relative', width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.1)', cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }} title="Color de tu nombre">
-                  <input 
+                  <input
                     type="color"
                     value={chatColor}
                     onChange={e => setChatColor(e.target.value)}
                     style={{ position: 'absolute', top: '-10px', left: '-10px', width: '50px', height: '50px', padding: 0, border: 'none', cursor: 'pointer' }}
                   />
                 </div>
-                <input 
+                <input
                   type="text"
                   value={chatInput}
                   onChange={e => setChatInput(e.target.value)}
@@ -784,17 +842,17 @@ export default function GolAGol() {
                   maxLength={200}
                   style={{ flex: 1, padding: '10px 16px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.6)', color: 'white', outline: 'none', fontSize: '0.9rem' }}
                 />
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={!chatInput.trim() || enviarChatMut.isPending}
                   title="Enviar"
-                  style={{ 
-                    width: '38px', height: '38px', 
+                  style={{
+                    width: '38px', height: '38px',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: chatInput.trim() ? 'linear-gradient(135deg, #238636 0%, #2ea043 100%)' : 'rgba(255,255,255,0.05)', 
-                    color: chatInput.trim() ? 'white' : '#8b949e', 
-                    border: 'none', borderRadius: '50%', 
-                    cursor: chatInput.trim() ? 'pointer' : 'not-allowed', 
+                    background: chatInput.trim() ? 'linear-gradient(135deg, #238636 0%, #2ea043 100%)' : 'rgba(255,255,255,0.05)',
+                    color: chatInput.trim() ? 'white' : '#8b949e',
+                    border: 'none', borderRadius: '50%',
+                    cursor: chatInput.trim() ? 'pointer' : 'not-allowed',
                     transition: 'all 0.2s', fontSize: '1.1rem',
                     flexShrink: 0,
                     paddingLeft: '3px' // para centrar opticamente la flecha
@@ -808,14 +866,14 @@ export default function GolAGol() {
         </div>
 
         <div className={styles.teamsRow}>
-          <div 
+          <div
             onClick={() => setPlantelesCollapsed(!plantelesCollapsed)}
-            style={{ 
-              width: '100%', 
-              cursor: 'pointer', 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
+            style={{
+              width: '100%',
+              cursor: 'pointer',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
               paddingBottom: '12px',
               borderBottom: '1px solid rgba(255,255,255,0.1)',
               marginBottom: '4px'
@@ -829,9 +887,9 @@ export default function GolAGol() {
 
           {!plantelesCollapsed && (
             <div className={styles.teamsInnerRow}>
-              <EquipoPanel 
-                esLocal={true} 
-                partido={partido} 
+              <EquipoPanel
+                esLocal={true}
+                partido={partido}
                 alineaciones={alineaciones}
                 plantel={plantelLoc}
                 agregarAlineacionMut={agregarAlin}
@@ -840,9 +898,9 @@ export default function GolAGol() {
                 isAdmin={isAdmin}
                 tiempoActual={tiempoState}
               />
-              <EquipoPanel 
-                esLocal={false} 
-                partido={partido} 
+              <EquipoPanel
+                esLocal={false}
+                partido={partido}
                 alineaciones={alineaciones}
                 plantel={plantelVis}
                 agregarAlineacionMut={agregarAlin}
@@ -895,10 +953,10 @@ export default function GolAGol() {
             <p style={{ color: '#e6edf3', margin: '0 0 16px 0', fontWeight: 600, fontSize: '1.1rem' }}>
               {partido.estado === 'suspendido' ? 'Reanudar Partido' : 'Suspender Partido'}
             </p>
-            
-            <input 
-              type="text" 
-              placeholder={partido.estado === 'suspendido' ? 'Motivo de reanudación (opcional)' : 'Motivo de suspensión (ej. lluvia, incidentes)'} 
+
+            <input
+              type="text"
+              placeholder={partido.estado === 'suspendido' ? 'Motivo de reanudación (opcional)' : 'Motivo de suspensión (ej. lluvia, incidentes)'}
               value={motivoSuspension}
               onChange={e => setMotivoSuspension(e.target.value)}
               style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #30363d', background: '#0d1117', color: 'white', marginBottom: partido.estado === 'suspendido' ? '10px' : '20px' }}
@@ -906,9 +964,9 @@ export default function GolAGol() {
             />
 
             {partido.estado === 'suspendido' && (
-              <input 
-                type="number" 
-                placeholder="Continuar desde minuto... (ej: 0, 45, o dejar vacío)" 
+              <input
+                type="number"
+                placeholder="Continuar desde minuto... (ej: 0, 45, o dejar vacío)"
                 value={minutoReanudacion}
                 onChange={e => setMinutoReanudacion(e.target.value)}
                 style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #30363d', background: '#0d1117', color: 'white', marginBottom: '20px' }}
@@ -930,28 +988,28 @@ export default function GolAGol() {
                 disabled={cambiarEstadoMut.isPending}
                 onClick={() => {
                   const nuevoEstado = partido.estado === 'suspendido' ? 'en_curso' : 'suspendido';
-                  
+
                   const detalleObj = { motivo: motivoSuspension };
                   if (nuevoEstado === 'en_curso' && minutoReanudacion !== '') {
                     detalleObj.forzar_minuto = parseInt(minutoReanudacion, 10);
                   }
 
-                  cambiarEstadoMut.mutate({ 
-                    estado: nuevoEstado, 
-                    motivo: JSON.stringify(detalleObj), 
-                    minuto: minutoReanudacion !== '' ? parseInt(minutoReanudacion, 10) : tiempoState.mins 
+                  cambiarEstadoMut.mutate({
+                    estado: nuevoEstado,
+                    motivo: JSON.stringify(detalleObj),
+                    minuto: minutoReanudacion !== '' ? parseInt(minutoReanudacion, 10) : tiempoState.mins
                   });
-                  
+
                   setShowSuspendModal(false);
                   setMotivoSuspension('');
                   setMinutoReanudacion('');
                 }}
-                style={{ 
-                  padding: '8px 16px', 
-                  border: 'none', 
-                  borderRadius: '6px', 
-                  color: 'white', 
-                  fontWeight: 600, 
+                style={{
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: 'white',
+                  fontWeight: 600,
                   cursor: 'pointer',
                   background: partido.estado === 'suspendido' ? '#238636' : '#f85149'
                 }}
@@ -962,6 +1020,46 @@ export default function GolAGol() {
           </div>
         </div>
       )}
+      {/* TOOLTIP FLOTANTE GLOBAL (para evitar recortes por overflow) */}
+      {createPortal(
+        <AnimatePresence>
+          {activeChatTooltip.id && (
+            <motion.div
+              initial={{ opacity: 0, x: '-50%', y: 'calc(-100% + 5px)' }}
+              animate={{ opacity: 1, x: '-50%', y: '-100%' }}
+              exit={{ opacity: 0, x: '-50%', y: 'calc(-100% + 5px)' }}
+              style={{
+                position: 'fixed',
+                top: `${activeChatTooltip.y - 4}px`,
+                left: `${activeChatTooltip.x}px`,
+                background: 'rgba(13, 17, 23, 0.95)',
+                border: '1px solid #30363d',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                fontSize: '0.75rem',
+                color: '#c9d1d9',
+                whiteSpace: 'nowrap',
+                zIndex: 99999,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                pointerEvents: 'none'
+              }}
+            >
+              {activeChatTooltip.text}
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                borderWidth: '5px',
+                borderStyle: 'solid',
+                borderColor: '#30363d transparent transparent transparent'
+              }} />
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
     </div>
   );
 }

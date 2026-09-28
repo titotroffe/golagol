@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useWsStore, useNotificacionesStore, useToastStore, useAuthStore } from '../store';
+import { playWhistle, playGoal, playPop } from '../utils/sounds';
 
 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const WS_URL = `${wsProtocol}//${window.location.host}/ws`;
@@ -44,32 +45,44 @@ export function useWebSocket(onEvento) {
               
               if (evt.tipo === 'GOL' || evt.tipo === 'GOL_PENAL' || evt.tipo === 'AUTOGOL') {
                 cuerpo = `⚽ ¡GOL de ${evt.equipo_nombre}${minStr}! Lo hizo ${jNombre}${resultadoStr}`;
+                try { playGoal(); } catch(e){}
               } else if (evt.tipo === 'AMARILLA') {
                 cuerpo = `🟨 Amarilla para ${jNombre}${minStr}`;
+                try { playPop(); } catch(e){}
               } else if (evt.tipo === 'DOBLE_AMARILLA') {
                 cuerpo = `🟥 ¡Doble amarilla y Expulsión para ${jNombre}${minStr}!`;
+                try { playPop(); } catch(e){}
               } else if (evt.tipo === 'ROJA') {
                 cuerpo = `🟥 ¡Roja directa para ${jNombre}${minStr}!`;
+                try { playPop(); } catch(e){}
               } else if (evt.tipo === 'CAMBIO') {
                 let entra = 'un jugador';
                 try {
                   if (evt.detalle) entra = JSON.parse(evt.detalle).entra_nombre || entra;
                 } catch(e) {}
                 cuerpo = `🔄 Cambio${minStr}: Entra ${entra}, sale ${jNombre}`;
+                try { playPop(); } catch(e){}
               } else if (evt.tipo === 'PENAL_A_FAVOR') {
                 cuerpo = `⚠️ ¡Penal a favor de ${evt.equipo_nombre || 'un equipo'}${minStr}!`;
+                try { playWhistle(); } catch(e){}
               } else if (evt.tipo === 'PENAL_ATAJADO') {
                 cuerpo = `🧤 ¡Penal atajado a ${jNombre}${minStr}!`;
+                try { playPop(); } catch(e){}
               } else if (evt.tipo === 'PENAL_ERRADO') {
                 cuerpo = `❌ ¡Penal errado por ${jNombre}${minStr}!`;
+                try { playPop(); } catch(e){}
               } else if (evt.tipo === 'INICIO_PARTIDO') {
                 cuerpo = `⚽ ¡Empezó el partido!`;
+                try { playWhistle(); } catch(e){}
               } else if (evt.tipo === 'FIN_1T') {
                 cuerpo = `⏳ ¡Final del primer tiempo! Parcial: ${resultadoStr}`;
+                try { playWhistle(); } catch(e){}
               } else if (evt.tipo === 'INICIO_2T') {
                 cuerpo = `⚽ ¡Arrancó el segundo tiempo!`;
+                try { playWhistle(); } catch(e){}
               } else if (evt.tipo === 'FIN_PARTIDO') {
                 cuerpo = `🏁 ¡Terminó el partido! Final: ${resultadoStr}`;
+                try { playWhistle(); } catch(e){}
                 
                 // Mostrar puntos prode
                 const myUserId = useAuthStore.getState().usuario?.id;

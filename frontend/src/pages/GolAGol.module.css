@@ -299,22 +299,31 @@
   padding: 8px;
   background: rgba(255, 255, 255, 0.03);
   border-radius: 8px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .btnTeamAction {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(88, 166, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(88, 166, 255, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
   border-radius: 6px;
-  color: white;
+  color: #c9d1d9;
   cursor: pointer;
   padding: 6px 10px;
   font-size: 0.85rem;
   font-weight: 700;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .btnTeamAction:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(88, 166, 255, 0.25);
+  color: white;
+  box-shadow: 0 0 10px rgba(88, 166, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 .actionFormBox {
@@ -345,18 +354,22 @@
 }
 
 .btnConfirmAction {
-  background: #238636;
+  background: rgba(48, 209, 88, 0.2);
+  backdrop-filter: blur(10px);
   color: white;
-  border: 1px solid rgba(240, 246, 252, 0.1);
+  border: 1px solid rgba(48, 209, 88, 0.4);
+  box-shadow: 0 0 10px rgba(48, 209, 88, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   padding: 8px;
   border-radius: 6px;
   font-weight: 700;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s ease;
 }
 
 .btnConfirmAction:hover:not(:disabled) {
-  background: #2ea043;
+  background: rgba(48, 209, 88, 0.4);
+  box-shadow: 0 0 20px rgba(48, 209, 88, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 .btnConfirmAction:disabled {
@@ -627,4 +640,88 @@
     width: 18px;
     font-size: 0.75rem;
   }
+}
+.pulsoWidget {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+.pulsoTitle {
+  margin: 0 0 10px 0;
+  font-size: 0.9rem;
+  color: #c9d1d9;
+  text-align: center;
+}
+.pulsoBarContainer {
+  display: flex;
+  height: 24px;
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+.pulsoBarLocal {
+  background: linear-gradient(90deg, #238636, #2ea043);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 1s ease;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.pulsoBarEmpate {
+  background: linear-gradient(90deg, #6e7681, #8b949e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 1s ease;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.pulsoBarVisita {
+  background: linear-gradient(90deg, #1f6feb, #58a6ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 1s ease;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.chatTooltipContainer {
+  position: relative;
+  display: inline-block;
+}
+.chatTooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(13, 17, 23, 0.95);
+  border: 1px solid #30363d;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: #c9d1d9;
+  white-space: nowrap;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  margin-bottom: 4px;
+  pointer-events: none;
+}
+.chatTooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: #30363d transparent transparent transparent;
 }
