@@ -482,11 +482,11 @@ export default function GolAGol() {
       const now = Date.now();
 
       // Procesar eventos cronológicamente para calcular el tiempo neto
-      const evsChronological = [...partido.eventos].sort((a, b) => new Date(a.registrado_en) - new Date(b.registrado_en));
+      const evsChronological = [...partido.eventos].sort((a, b) => new Date(a.registrado_en.replace(' ', 'T') + (a.registrado_en.endsWith('Z') ? '' : 'Z')) - new Date(b.registrado_en.replace(' ', 'T') + (b.registrado_en.endsWith('Z') ? '' : 'Z')));
       const fueSuspendido = evsChronological.some(e => e.tipo === 'SUSPENSION');
 
       evsChronological.forEach(ev => {
-        const evTime = new Date(ev.registrado_en + 'Z').getTime();
+        const evTime = new Date(ev.registrado_en.replace(' ', 'T') + (ev.registrado_en.endsWith('Z') ? '' : 'Z')).getTime();
 
         if (ev.tipo === 'INICIO_PARTIDO') {
           lastStartTime = evTime;
@@ -798,7 +798,7 @@ export default function GolAGol() {
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                       >
                         <span style={{ color: '#8b949e', fontSize: '0.7rem', flexShrink: 0 }}>
-                          {new Date(m.enviado_en).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(m.enviado_en.replace(' ', 'T') + (m.enviado_en.endsWith('Z') ? '' : 'Z')).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                         <div style={{ display: 'flex', alignItems: 'baseline' }}>
                           <strong
