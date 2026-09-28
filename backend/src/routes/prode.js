@@ -113,6 +113,7 @@ router.get('/ranking/:torneo_id', (req, res) => {
     ) pr ON pr.usuario_id = u.id
     WHERE u.activo = 1
     GROUP BY u.id
+    HAVING pronosticos_jugados > 0
     ORDER BY puntos DESC, exactos DESC, u.apellido ASC
   `).all(torneo_id);
 

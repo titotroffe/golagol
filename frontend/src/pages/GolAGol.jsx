@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { partidosApi, equiposApi } from '../api';
 import { useAuthStore } from '../store';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { motion, AnimatePresence } from 'framer-motion';
 import styles from './GolAGol.module.css';
 
 function EquipoPanel({ 
@@ -22,7 +23,6 @@ function EquipoPanel({
   
   const [pendingAction, setPendingAction] = useState(null);
   const [actionForm, setActionForm] = useState({});
-
   // Filtrar alineaciones de este equipo
   const miAlineacion = alineaciones.filter(a => a.equipo_id === equipoId);
   const titulares = miAlineacion.filter(a => a.tipo === 'titular');
@@ -214,7 +214,19 @@ function EquipoPanel({
 
   return (
     <div className={styles.equipoCol}>
-      <h2 className={styles.eqTitle}>{nombre}</h2>
+      <h2 
+        className={styles.eqTitle} 
+        style={{ 
+          margin: 0, 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          fontSize: '1rem'
+        }}
+        title={nombre}
+      >
+        {nombre}
+      </h2>
 
       {isAdmin && (
         <div className={styles.teamActionsBtnGroup}>
@@ -234,8 +246,7 @@ function EquipoPanel({
 
       <div className={styles.section}>
         <div className={styles.secHeader}>
-          <span className={styles.secHeading}>Titulares (1-11)</span>
-          <span className={styles.count}>{titulares.length}/11</span>
+          <span className={styles.secHeading}>Titulares</span>
         </div>
         
         <ul className={styles.lista}>
@@ -252,7 +263,7 @@ function EquipoPanel({
               <li key={t.id} className={`${styles.jItem} ${inhabilitado ? styles.jInhabilitado : ''}`}>
                 <div className={styles.jInfo}>
                   <span className={styles.dorsal}>{t.dorsal}</span>
-                  <span className={styles.nombre}>{t.apellido ? `${t.nombre} ${t.apellido}` : t.nombre}</span>
+                  <span className={styles.nombre}>{t.apellido || t.nombre}</span>
                   {amarillas === 1 && !expulsado && <span className={styles.tagAmarilla}>🟨</span>}
                   {expulsado && <span className={styles.tagRoja}>🟥</span>}
                   {haSalido && <span className={styles.tagSub}>⬇️ Salió</span>}
@@ -278,8 +289,7 @@ function EquipoPanel({
 
       <div className={styles.section}>
         <div className={styles.secHeader}>
-          <span className={styles.secHeading}>Suplentes (12-18)</span>
-          <span className={styles.count}>{suplentes.length}/7</span>
+          <span className={styles.secHeading}>Suplentes</span>
         </div>
         
         <ul className={styles.lista}>
@@ -289,7 +299,7 @@ function EquipoPanel({
               <li key={s.id} className={`${styles.jItem} ${expulsado ? styles.jInhabilitado : ''}`}>
                 <div className={styles.jInfo}>
                   <span className={styles.dorsal}>{s.dorsal}</span>
-                  <span className={styles.nombre}>{s.apellido ? `${s.nombre} ${s.apellido}` : s.nombre}</span>
+                  <span className={styles.nombre}>{s.apellido || s.nombre}</span>
                   {amarillas === 1 && !expulsado && <span className={styles.tagAmarilla}>🟨</span>}
                   {expulsado && <span className={styles.tagRoja}>🟥</span>}
                   {haEntrado && <span className={styles.tagSub}>⬆️ Jugando</span>}
@@ -320,12 +330,23 @@ function EquipoPanel({
 export default function GolAGol() {
   const { id } = useParams();
   const queryClient = useQueryClient();
-  const isAdmin = useAuthStore(s => s.usuario?.rol === 'admin');
+  const currentUser = useAuthStore(s => s.usuario);
+  const isAdmin = currentUser?.rol === 'admin';
 
   useWebSocket((msg) => {
     // Cuando entra un evento por websocket, invalidamos las queries para refrescar
     queryClient.invalidateQueries(['partido', id]);
     queryClient.invalidateQueries(['alineaciones', id]);
+  });
+
+  useWebSocket((msg) => {
+    if (msg.tipo === 'CHAT_PARTIDO' && msg.partido_id === parseInt(id)) {
+      queryClient.setQueryData(['chat', id], (old) => {
+        if (!old) return [msg.mensaje];
+        if (old.some(m => m.id === msg.mensaje.id)) return old; // duplicado
+        return [...old, msg.mensaje];
+      });
+    }
   });
 
   // Queries
@@ -349,6 +370,12 @@ export default function GolAGol() {
     queryKey: ['plantel', partido?.equipo_visita_id],
     queryFn: () => equiposApi.plantel(partido.equipo_visita_id),
     enabled: !!partido,
+  });
+
+  const { data: chatMensajes = [] } = useQuery({
+    queryKey: ['chat', id],
+    queryFn: () => partidosApi.chat(id),
+    enabled: !!id,
   });
 
   // Mutations
@@ -377,6 +404,10 @@ export default function GolAGol() {
     onSuccess: () => queryClient.invalidateQueries(['partido', id])
   });
 
+  const enviarChatMut = useMutation({
+    mutationFn: (payload) => partidosApi.enviarChat(id, payload),
+  });
+
   const [tiempoState, setTiempoState] = useState({ mins: 0, secs: 0, extra: null });
   const [tiempoExtraInput, setTiempoExtraInput] = useState('');
   const [showTiempoExtra, setShowTiempoExtra] = useState(false);
@@ -384,6 +415,18 @@ export default function GolAGol() {
   const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [motivoSuspension, setMotivoSuspension] = useState('');
   const [minutoReanudacion, setMinutoReanudacion] = useState('');
+  
+  const [activeTab, setActiveTab] = useState('eventos');
+  const [chatInput, setChatInput] = useState('');
+  const [chatColor, setChatColor] = useState('#58a6ff');
+  const [plantelesCollapsed, setPlantelesCollapsed] = useState(true);
+  const chatScrollRef = useRef(null);
+
+  useEffect(() => {
+    if (activeTab === 'chat' && chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [chatMensajes, activeTab]);
 
   useEffect(() => {
     if (!partido || !partido.eventos) return;
@@ -509,26 +552,19 @@ export default function GolAGol() {
             <span className={styles.teamNameText}>{partido.visita_nombre}</span>
           </div>
         </div>
-        <div className={styles.estadoIndicator}>
+        <div className={styles.estadoIndicator} style={
+          partido.estado === 'en_curso' ? { color: '#ff4d4f', textShadow: '0 0 8px rgba(255, 77, 79, 0.8)' } :
+          partido.estado === 'suspendido' ? { color: '#ff7b72' } :
+          { color: '#8b949e' }
+        }>
+          {partido.estado === 'en_curso' && <div className={styles.liveDot} />}
           {partido.estado === 'pendiente' ? 'Esperando inicio' : 
            partido.estado === 'en_curso' ? 'EN VIVO' : 
            partido.estado === 'suspendido' ? 'SUSPENDIDO' : 'FINALIZADO'}
         </div>
       </div>
 
-      <div className={styles.colsWrapper}>
-        <EquipoPanel 
-          esLocal={true} 
-          partido={partido} 
-          alineaciones={alineaciones}
-          plantel={plantelLoc}
-          agregarAlineacionMut={agregarAlin}
-          eliminarAlineacionMut={eliminarAlin}
-          registrarEventoMut={regEvento}
-          isAdmin={isAdmin}
-          tiempoActual={tiempoState}
-        />
-        
+      <div className={styles.mainLayout}>
         {/* PANEL CENTRAL: EVENTOS RECIENTES Y CONTROLES DE PARTIDO */}
         <div className={styles.feedCol}>
           {isAdmin && (
@@ -590,9 +626,26 @@ export default function GolAGol() {
               )}
             </div>
           )}
-          <h3 className={styles.feedTitle}>Eventos Registrados</h3>
-          <div className={styles.feedScroll}>
-            {partido.eventos?.slice().reverse().map(ev => {
+
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+            <button 
+              onClick={() => setActiveTab('eventos')}
+              style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid', borderColor: activeTab === 'eventos' ? '#3fb950' : '#30363d', background: activeTab === 'eventos' ? 'rgba(63, 185, 80, 0.15)' : 'transparent', color: activeTab === 'eventos' ? '#3fb950' : '#8b949e', fontWeight: 700, cursor: 'pointer' }}
+            >
+              ⏱ Eventos
+            </button>
+            <button 
+              onClick={() => setActiveTab('chat')}
+              style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid', borderColor: activeTab === 'chat' ? '#58a6ff' : '#30363d', background: activeTab === 'chat' ? 'rgba(88, 166, 255, 0.15)' : 'transparent', color: activeTab === 'chat' ? '#58a6ff' : '#8b949e', fontWeight: 700, cursor: 'pointer' }}
+            >
+              💬 Chat en Vivo
+            </button>
+          </div>
+
+          {activeTab === 'eventos' && (
+            <>
+              <div className={styles.feedScroll}>
+                {partido.eventos?.slice().reverse().map(ev => {
               let subText = '';
               if (ev.tipo === 'CAMBIO' && ev.detalle && ev.detalle.startsWith('{')) {
                 try {
@@ -608,19 +661,29 @@ export default function GolAGol() {
               }
 
               return (
-                <div key={ev.id} className={styles.evCard}>
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  key={ev.id} 
+                  className={styles.evCard}
+                >
                   <div className={styles.evCardMain}>
-                    <span className={styles.evIcon}>
-                      {ev.tipo === 'GOL' || ev.tipo === 'GOL_PENAL' ? '⚽' : 
-                       ev.tipo === 'PENAL_A_FAVOR' ? '🎯' : 
-                       ev.tipo === 'PENAL_ERRADO' ? '❌' : 
-                       ev.tipo === 'PENAL_ATAJADO' ? '🧤' : 
-                       ev.tipo === 'AMARILLA' ? '🟨' : 
-                       ev.tipo === 'ROJA' ? '🟥' : 
-                       ev.tipo === 'CAMBIO' ? '🔄' : 
-                       ev.tipo === 'TIEMPO_EXTRA' ? '➕' :
-                       ev.tipo.startsWith('INICIO') || ev.tipo.startsWith('FIN') ? '⏱' : '▪️'}
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '35px' }}>
+                      <span className={styles.evIcon}>
+                        {ev.tipo === 'GOL' || ev.tipo === 'GOL_PENAL' ? '⚽' : 
+                         ev.tipo === 'PENAL_A_FAVOR' ? '🎯' : 
+                         ev.tipo === 'PENAL_ERRADO' ? '❌' : 
+                         ev.tipo === 'PENAL_ATAJADO' ? '🧤' : 
+                         ev.tipo === 'AMARILLA' ? '🟨' : 
+                         ev.tipo === 'ROJA' ? '🟥' : 
+                         ev.tipo === 'CAMBIO' ? '🔄' : 
+                         ev.tipo === 'TIEMPO_EXTRA' ? '➕' :
+                         ev.tipo.startsWith('INICIO') || ev.tipo.startsWith('FIN') ? '⏱' : '▪️'}
+                      </span>
+                      {ev.minuto != null && ev.minuto > 0 && (
+                        <span style={{ fontSize: '0.7rem', color: '#8b949e', fontWeight: 800, marginTop: '2px' }}>{ev.minuto}'</span>
+                      )}
+                    </div>
                     <div className={styles.evDetails}>
                       <strong>
                         {ev.tipo === 'CAMBIO' ? `Salió ${ev.jugador_apellido || ev.jugador_nombre}` : 
@@ -645,26 +708,145 @@ export default function GolAGol() {
                       🗑️
                     </button>
                   )}
-                </div>
+                </motion.div>
               );
             })}
             {(!partido.eventos || partido.eventos.length === 0) && (
               <p className={styles.msg}>Aún no hay eventos registrados.</p>
             )}
           </div>
+          </>
+          )}
+
+          {activeTab === 'chat' && (
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+              <div className={styles.feedScroll} ref={chatScrollRef} style={{ flex: 1, paddingRight: '8px' }}>
+                <AnimatePresence>
+                  {chatMensajes.map(m => {
+                    return (
+                      <motion.div 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        key={m.id} 
+                        style={{ 
+                          padding: '4px 8px',
+                          fontSize: '0.85rem',
+                          display: 'flex',
+                          gap: '8px',
+                          alignItems: 'baseline',
+                          borderRadius: '4px',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <span style={{ color: '#8b949e', fontSize: '0.7rem', flexShrink: 0 }}>
+                          {new Date(m.enviado_en).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </span>
+                        <strong style={{ color: m.color || '#58a6ff', whiteSpace: 'nowrap' }}>{m.usuario}</strong>
+                        <span style={{ color: '#e6edf3', wordBreak: 'break-word', lineHeight: '1.4' }}>{m.mensaje}</span>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+                {chatMensajes.length === 0 && (
+                  <p className={styles.msg} style={{ color: '#8b949e' }}>No hay mensajes todavía. ¡Sé el primero en comentar!</p>
+                )}
+              </div>
+              <form 
+                onSubmit={e => {
+                  e.preventDefault();
+                  if (!chatInput.trim()) return;
+                  enviarChatMut.mutate({ mensaje: chatInput, color: chatColor });
+                  setChatInput('');
+                }}
+                style={{ display: 'flex', gap: '8px', marginTop: '12px', alignItems: 'center' }}
+              >
+                <div style={{ position: 'relative', width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.1)', cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }} title="Color de tu nombre">
+                  <input 
+                    type="color"
+                    value={chatColor}
+                    onChange={e => setChatColor(e.target.value)}
+                    style={{ position: 'absolute', top: '-10px', left: '-10px', width: '50px', height: '50px', padding: 0, border: 'none', cursor: 'pointer' }}
+                  />
+                </div>
+                <input 
+                  type="text"
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  placeholder="Escribí un mensaje..."
+                  maxLength={200}
+                  style={{ flex: 1, padding: '10px 16px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.6)', color: 'white', outline: 'none', fontSize: '0.9rem' }}
+                />
+                <button 
+                  type="submit" 
+                  disabled={!chatInput.trim() || enviarChatMut.isPending}
+                  title="Enviar"
+                  style={{ 
+                    width: '38px', height: '38px', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: chatInput.trim() ? 'linear-gradient(135deg, #238636 0%, #2ea043 100%)' : 'rgba(255,255,255,0.05)', 
+                    color: chatInput.trim() ? 'white' : '#8b949e', 
+                    border: 'none', borderRadius: '50%', 
+                    cursor: chatInput.trim() ? 'pointer' : 'not-allowed', 
+                    transition: 'all 0.2s', fontSize: '1.1rem',
+                    flexShrink: 0,
+                    paddingLeft: '3px' // para centrar opticamente la flecha
+                  }}
+                >
+                  ➤
+                </button>
+              </form>
+            </div>
+          )}
         </div>
 
-        <EquipoPanel 
-          esLocal={false} 
-          partido={partido} 
-          alineaciones={alineaciones}
-          plantel={plantelVis}
-          agregarAlineacionMut={agregarAlin}
-          eliminarAlineacionMut={eliminarAlin}
-          registrarEventoMut={regEvento}
-          isAdmin={isAdmin}
-          tiempoActual={tiempoState}
-        />
+        <div className={styles.teamsRow}>
+          <div 
+            onClick={() => setPlantelesCollapsed(!plantelesCollapsed)}
+            style={{ 
+              width: '100%', 
+              cursor: 'pointer', 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              paddingBottom: '12px',
+              borderBottom: '1px solid rgba(255,255,255,0.1)',
+              marginBottom: '4px'
+            }}
+          >
+            <h3 style={{ margin: 0, color: 'white', fontSize: '1.1rem' }}>📋 Planteles</h3>
+            <span style={{ color: '#8b949e', fontSize: '0.9rem', fontWeight: 600 }}>
+              {plantelesCollapsed ? '▼ Mostrar' : '▲ Ocultar'}
+            </span>
+          </div>
+
+          {!plantelesCollapsed && (
+            <div className={styles.teamsInnerRow}>
+              <EquipoPanel 
+                esLocal={true} 
+                partido={partido} 
+                alineaciones={alineaciones}
+                plantel={plantelLoc}
+                agregarAlineacionMut={agregarAlin}
+                eliminarAlineacionMut={eliminarAlin}
+                registrarEventoMut={regEvento}
+                isAdmin={isAdmin}
+                tiempoActual={tiempoState}
+              />
+              <EquipoPanel 
+                esLocal={false} 
+                partido={partido} 
+                alineaciones={alineaciones}
+                plantel={plantelVis}
+                agregarAlineacionMut={agregarAlin}
+                eliminarAlineacionMut={eliminarAlin}
+                registrarEventoMut={regEvento}
+                isAdmin={isAdmin}
+                tiempoActual={tiempoState}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Modal de confirmación para eliminar evento */}

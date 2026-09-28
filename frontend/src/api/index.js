@@ -1,3 +1,5 @@
+import { useAuthStore } from '../store';
+
 const API_BASE = '/api';
 
 function getAuthHeader() {
@@ -29,6 +31,11 @@ async function request(path, options = {}) {
   });
 
   const data = await res.json().catch(() => ({}));
+
+  if (res.status === 401) {
+    // Si recibimos 401, el token expiró o es inválido. Cerramos sesión automáticamente.
+    useAuthStore.getState().logout();
+  }
 
   if (!res.ok) {
     throw new Error(data.error || `Error ${res.status}`);
@@ -100,6 +107,8 @@ export const partidosApi = {
     request(`/partidos/${id}/alineaciones`, { method: 'POST', body: JSON.stringify(body) }),
   eliminarAlineacion: (id, jugadorId) =>
     request(`/partidos/${id}/alineaciones/${jugadorId}`, { method: 'DELETE' }),
+  chat: (id) => request(`/partidos/${id}/chat`),
+  enviarChat: (id, payload) => request(`/partidos/${id}/chat`, { method: 'POST', body: JSON.stringify(payload) }),
 };
 
 // ── PRODE ─────────────────────────────────────────────

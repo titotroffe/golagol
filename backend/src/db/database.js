@@ -214,13 +214,21 @@ db.exec(`
     PRIMARY KEY (grupo_id, usuario_id)
   );
 
+  CREATE TABLE IF NOT EXISTS partidos_chat (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    partido_id  INTEGER NOT NULL REFERENCES partidos(id),
+    usuario_id  INTEGER NOT NULL REFERENCES usuarios(id),
+    mensaje     TEXT NOT NULL,
+    enviado_en  TEXT DEFAULT (datetime('now'))
+  );
+
 `);
 
-// Migraciones automáticas simples
 const migraciones = [
   'ALTER TABLE usuarios ADD COLUMN avatar_url TEXT;',
   'ALTER TABLE partidos ADD COLUMN por_escritorio INTEGER NOT NULL DEFAULT 0;',
   'ALTER TABLE partidos ADD COLUMN ganador_escritorio TEXT;',
+  'ALTER TABLE partidos_chat ADD COLUMN color TEXT DEFAULT "#58a6ff";'
 ];
 migraciones.forEach(sql => {
   try { db.exec(sql); } catch (_) { /* columna ya existe */ }

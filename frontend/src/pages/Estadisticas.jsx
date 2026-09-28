@@ -83,7 +83,13 @@ export default function Estadisticas() {
           <span className={est.secSub}>Top anotadores del torneo</span>
         </div>
 
-        {loadingGol && <p className={styles.msg}>Cargando...</p>}
+        {loadingGol && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="skeleton" style={{ height: '48px', borderRadius: '8px', opacity: 1 - i * 0.15 }} />
+            ))}
+          </div>
+        )}
 
         {!loadingGol && (!goleadores || goleadores.length === 0) && (
           <p className={styles.msg}>No hay goles registrados aun.</p>
@@ -151,7 +157,13 @@ export default function Estadisticas() {
           <span className={est.secSub}>Jugadores con tarjeta roja en el torneo</span>
         </div>
 
-        {loadingExp && <p className={styles.msg}>Cargando...</p>}
+        {loadingExp && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="skeleton" style={{ height: '48px', borderRadius: '8px', opacity: 1 - i * 0.15 }} />
+            ))}
+          </div>
+        )}
 
         {!loadingExp && (!expulsados || expulsados.length === 0) && (
           <p className={styles.msg}>No hay expulsados registrados.</p>
@@ -204,7 +216,13 @@ export default function Estadisticas() {
           <span className={est.secSub}>Clubes con más tarjetas rojas en el torneo</span>
         </div>
 
-        {loadingExp && <p className={styles.msg}>Cargando...</p>}
+        {loadingExp && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="skeleton" style={{ height: '48px', borderRadius: '8px', opacity: 1 - i * 0.15 }} />
+            ))}
+          </div>
+        )}
 
         {!loadingExp && equiposConMasExpulsados.length === 0 && (
           <p className={styles.msg}>No hay expulsados registrados.</p>
@@ -251,7 +269,13 @@ export default function Estadisticas() {
           <span className={est.secSub}>Clubes con más goles a favor</span>
         </div>
 
-        {loadingTabla && <p className={styles.msg}>Cargando...</p>}
+        {loadingTabla && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="skeleton" style={{ height: '48px', borderRadius: '8px', opacity: 1 - i * 0.15 }} />
+            ))}
+          </div>
+        )}
 
         {!loadingTabla && equiposGoleadores.length > 0 && (
           <div className={est.tableOuter}>
@@ -300,7 +324,13 @@ export default function Estadisticas() {
           <span className={est.secSub}>Clubes con menos goles en contra</span>
         </div>
 
-        {loadingTabla && <p className={styles.msg}>Cargando...</p>}
+        {loadingTabla && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="skeleton" style={{ height: '48px', borderRadius: '8px', opacity: 1 - i * 0.15 }} />
+            ))}
+          </div>
+        )}
 
         {!loadingTabla && equiposMenosVencidos.length > 0 && (
           <div className={est.tableOuter}>

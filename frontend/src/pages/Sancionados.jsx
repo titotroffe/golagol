@@ -20,7 +20,13 @@ export default function Sancionados() {
       <section className={est.section}>
 
 
-        {isLoading && <p className={styles.msg}>Cargando...</p>}
+        {isLoading && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="skeleton" style={{ height: '48px', borderRadius: '8px', opacity: 1 - i * 0.15 }} />
+            ))}
+          </div>
+        )}
 
         {!isLoading && (!sancionados || sancionados.length === 0) && (
           <p className={styles.msg}>No hay jugadores sancionados actualmente.</p>

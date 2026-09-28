@@ -2,10 +2,9 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
-  height: 100vh;
+  min-height: 100vh;
   padding: 20px;
-  background-color: #0d1117;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 .msg {
@@ -20,10 +19,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(22, 27, 34, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(22, 27, 34, 0.4);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 32px rgba(0, 0, 0, 0.2);
   padding: 16px;
-  border-radius: 12px;
+  border-radius: 16px;
   position: relative;
 }
 
@@ -48,7 +50,7 @@
 }
 
 .scoreTeam {
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 800;
   color: white;
   text-transform: uppercase;
@@ -119,26 +121,62 @@
 
 .estadoIndicator {
   margin-top: 8px;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 800;
-  color: #d29922;
   letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-/* 3 COLUMNAS */
-.colsWrapper {
+.liveDot {
+  width: 8px;
+  height: 8px;
+  background-color: #ff4d4f;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #ff4d4f;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(255, 77, 79, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 77, 79, 0); }
+}
+
+/* LAYOUT PRINCIPAL */
+.mainLayout {
   display: flex;
+  flex-direction: row;
   gap: 20px;
   flex: 1;
-  min-height: 0;
+  width: 100%;
+}
+
+.teamsRow {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: rgba(22, 27, 34, 0.4);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 32px rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  padding: 16px;
+  max-height: 800px;
+  overflow-y: auto;
+}
+
+.teamsInnerRow {
+  display: flex;
+  gap: 20px;
+  width: 100%;
 }
 
 .equipoCol {
   flex: 1;
-  background: rgba(22, 27, 34, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -146,7 +184,7 @@
 }
 
 .eqTitle {
-  font-size: 1.4rem;
+  font-size: 1.15rem;
   font-weight: 900;
   color: white;
   margin: 0;
@@ -193,15 +231,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid transparent;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .jItem:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .jInhabilitado {
@@ -223,16 +258,13 @@
 }
 
 .dorsal {
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  color: #8b949e;
   font-size: 0.85rem;
-  font-weight: 900;
-  width: 26px;
-  height: 26px;
+  font-weight: 800;
+  width: 20px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 6px;
+  justify-content: flex-end;
 }
 
 .nombre {
@@ -412,10 +444,15 @@
 
 /* FEED CENTRAL */
 .feedCol {
-  width: 320px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(35, 134, 54, 0.3);
-  border-radius: 12px;
+  flex: 1;
+  max-width: 600px;
+  height: 600px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(35, 134, 54, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 32px rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -464,24 +501,25 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: 0;
 }
 
 .evCard {
   background: rgba(255, 255, 255, 0.08);
-  padding: 10px 14px;
-  border-radius: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  font-size: 0.9rem;
-  border-left: 4px solid #3fb950;
+  gap: 12px;
+  font-size: 0.85rem;
+  border-left: 3px solid #3fb950;
 }
 
 .evCardMain {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
 }
 
 .btnDeleteEvent {
@@ -500,7 +538,7 @@
 }
 
 .evIcon {
-  font-size: 1.5rem;
+  font-size: 1.15rem;
 }
 
 .evDetails {
@@ -510,32 +548,41 @@
 
 .evDetails strong {
   color: white;
-  font-size: 1rem;
+  font-size: 0.85rem;
 }
 
 .evSubText {
   color: #3fb950;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
 .evTeam {
   color: #8b949e;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
 }
 
 @media (max-width: 900px) {
-  .colsWrapper {
+  .mainLayout {
     flex-direction: column;
   }
-
+  
   .feedCol {
-    width: 100%;
-    height: 300px;
+    max-width: 100%;
+    height: 400px;
+    flex: none;
+  }
+
+  .teamsRow {
+    max-height: none;
+    overflow: visible;
   }
 }
 
 @media (max-width: 600px) {
+  .teamsInnerRow {
+    gap: 8px;
+  }
   .marcadorTop {
     padding: 12px 8px;
   }
@@ -570,15 +617,13 @@
   }
   .jInfo {
     gap: 6px;
-    flex-wrap: wrap;
   }
   .nombre {
     font-size: 0.85rem;
     word-break: break-word;
   }
   .dorsal {
-    width: 22px;
-    height: 22px;
+    width: 18px;
     font-size: 0.75rem;
   }
 }

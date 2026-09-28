@@ -1,16 +1,49 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body, #root {
+html, body {
   width: 100vw;
   min-height: 100vh;
   overflow-x: hidden;
-  font-family: 'Inter', system-ui, sans-serif;
-  background: #0d1117;
+  font-family: 'Outfit', system-ui, sans-serif;
+  background: #050810;
   color: #f0f6fc;
   -webkit-font-smoothing: antialiased;
 }
+
+#root {
+  width: 100vw;
+  min-height: 100vh;
+  background: transparent;
+  position: relative;
+  z-index: 1;
+}
+
+#root::before {
+  content: '';
+  position: fixed;
+  top: -20%;
+  left: -10%;
+  width: 70vw;
+  height: 70vw;
+  background: radial-gradient(circle, rgba(63, 185, 80, 0.15) 0%, rgba(0, 0, 0, 0) 60%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+#root::after {
+  content: '';
+  position: fixed;
+  bottom: -20%;
+  right: -10%;
+  width: 70vw;
+  height: 70vw;
+  background: radial-gradient(circle, rgba(88, 166, 255, 0.15) 0%, rgba(0, 0, 0, 0) 60%);
+  z-index: -1;
+  pointer-events: none;
+}
+
 
 input, select, textarea, button {
   font-family: inherit;

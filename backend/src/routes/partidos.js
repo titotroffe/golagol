@@ -451,4 +451,53 @@ router.delete('/:id/evento/:evento_id', authMiddleware, adminOReportero, (req, r
   res.json({ ok: true });
 });
 
+// ─────────────────────────────────────────
+// CHAT EN VIVO DEL PARTIDO
+// ─────────────────────────────────────────
+
+// GET /api/partidos/:id/chat - Obtener mensajes
+router.get('/:id/chat', (req, res) => {
+  const mensajes = db.prepare(`
+    SELECT c.id, c.mensaje, c.enviado_en, c.color,
+           u.nombre, u.apellido, u.usuario, u.avatar_url
+    FROM partidos_chat c
+    JOIN usuarios u ON u.id = c.usuario_id
+    WHERE c.partido_id = ?
+    ORDER BY c.enviado_en ASC
+  `).all(req.params.id);
+  res.json(mensajes);
+});
+
+// POST /api/partidos/:id/chat - Enviar mensaje
+router.post('/:id/chat', authMiddleware, (req, res) => {
+  const { mensaje } = req.body;
+  if (!mensaje || !mensaje.trim()) {
+    return res.status(400).json({ error: 'Mensaje vacío' });
+  }
+
+  const result = db.prepare(`
+    INSERT INTO partidos_chat (partido_id, usuario_id, mensaje, color)
+    VALUES (?, ?, ?, ?)
+  `).run(req.params.id, req.usuario.id, mensaje.trim(), req.body.color || '#58a6ff');
+
+  const nuevoMensaje = db.prepare(`
+    SELECT c.id, c.mensaje, c.enviado_en, c.color,
+           u.nombre, u.apellido, u.usuario, u.avatar_url
+    FROM partidos_chat c
+    JOIN usuarios u ON u.id = c.usuario_id
+    WHERE c.id = ?
+  `).get(result.lastInsertRowid);
+
+  // Broadcast WebSocket
+  if (req.app.locals.broadcast) {
+    req.app.locals.broadcast({
+      tipo: 'CHAT_PARTIDO',
+      partido_id: parseInt(req.params.id),
+      mensaje: nuevoMensaje
+    });
+  }
+
+  res.status(201).json(nuevoMensaje);
+});
+
 module.exports = router;
