@@ -39,24 +39,30 @@ export function playGoal() {
   const ctx = getAudioCtx();
   if (ctx.state === 'suspended') ctx.resume();
 
-  const freqs = [250, 300, 350];
-  freqs.forEach(freq => {
+  // Fanfarria triunfal: C5, E5, G5, C6
+  const notes = [523.25, 659.25, 783.99, 1046.50];
+  const startTime = ctx.currentTime;
+  
+  notes.forEach((freq, index) => {
     const osc = ctx.createOscillator();
     const gainNode = ctx.createGain();
-
-    osc.type = 'sawtooth';
+    
+    osc.type = 'triangle'; // Más suave que el sawtooth
     osc.frequency.value = freq;
-
-    gainNode.gain.setValueAtTime(0, ctx.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.05);
-    gainNode.gain.setValueAtTime(0.15, ctx.currentTime + 0.6);
-    gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.2);
-
+    
+    const noteStart = startTime + (index * 0.12);
+    const isLast = index === notes.length - 1;
+    const duration = isLast ? 1.2 : 0.12; // La última nota se mantiene
+    
+    gainNode.gain.setValueAtTime(0, noteStart);
+    gainNode.gain.linearRampToValueAtTime(0.3, noteStart + 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, noteStart + duration);
+    
     osc.connect(gainNode);
     gainNode.connect(ctx.destination);
-
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 1.2);
+    
+    osc.start(noteStart);
+    osc.stop(noteStart + duration + 0.1);
   });
 }
 
