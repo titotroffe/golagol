@@ -1,4 +1,16 @@
-const getAudioCtx = () => { if (!window.audioCtx) { window.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } return window.audioCtx; };
+export const getAudioCtx = () => { 
+  if (!window.audioCtx) { 
+    window.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
+  } 
+  return window.audioCtx; 
+};
+
+export function initAudio() {
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') {
+    ctx.resume().catch(() => {});
+  }
+}
 
 export function playWhistle() {
   const ctx = getAudioCtx();

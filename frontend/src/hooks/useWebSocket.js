@@ -1,6 +1,17 @@
 import { useEffect, useRef } from 'react';
 import { useWsStore, useNotificacionesStore, useToastStore, useAuthStore } from '../store';
-import { playWhistle, playGoal, playPop } from '../utils/sounds';
+import { playWhistle, playGoal, playPop, initAudio } from '../utils/sounds';
+
+// Activar audio en el primer click del usuario
+if (typeof window !== 'undefined') {
+  const init = () => {
+    initAudio();
+    window.removeEventListener('click', init);
+    window.removeEventListener('touchstart', init);
+  };
+  window.addEventListener('click', init);
+  window.addEventListener('touchstart', init);
+}
 
 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const WS_URL = `${wsProtocol}//${window.location.host}/ws`;
