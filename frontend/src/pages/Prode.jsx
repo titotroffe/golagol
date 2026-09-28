@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { torneosApi, partidosApi, prodeApi } from '../api';
 import { useTorneoStore, useAuthStore } from '../store';
@@ -157,7 +158,13 @@ function ProdeRanking({ torneoId }) {
     queryFn: () => prodeApi.ranking(torneoId),
   });
 
-  if (isLoading) return <p className={styles.msg}>Cargando ranking...</p>;
+  if (isLoading) return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '8px 0' }}>
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="skeleton" style={{ height: '42px', borderRadius: '8px', opacity: 1 - i * 0.12 }} />
+      ))}
+    </div>
+  );
   if (!ranking || ranking.length === 0) return <p className={styles.msg}>No hay puntos en este torneo.</p>;
 
   // Find user position
@@ -177,7 +184,7 @@ function ProdeRanking({ torneoId }) {
               <th className={tablaStyles.thPos}>#</th>
               <th className={tablaStyles.thEquipo}>Usuario</th>
               <th className={tablaStyles.thPts}>PTS</th>
-              <th className={tablaStyles.thNum}>EX</th>
+              <th className={tablaStyles.thExactos}>Exactos</th>
             </tr>
           </thead>
           <tbody>
@@ -197,33 +204,51 @@ function ProdeRanking({ torneoId }) {
 }
 
 function ProdeGrupos({ torneoId }) {
-  const [codigo, setCodigo] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const joinCodigo = searchParams.get('joinGrupo');
+
+  const [codigo, setCodigo] = useState(joinCodigo || '');
   const [nombre, setNombre] = useState('');
   const queryClient = useQueryClient();
 
   const { data: grupos, isLoading } = useQuery({
-    queryKey: ['prode-grupos'],
+    queryKey: ['prode-grupos', torneoId],
     queryFn: () => prodeApi.misGrupos(),
   });
 
   const crearMut = useMutation({
     mutationFn: () => prodeApi.crearGrupo({ nombre, torneo_id: torneoId }),
     onSuccess: () => {
-      queryClient.invalidateQueries(['prode-grupos']);
+      queryClient.invalidateQueries(['prode-grupos', torneoId]);
       setNombre('');
-      alert('Grupo creado exitosamente');
     }
   });
 
   const unirseMut = useMutation({
-    mutationFn: () => prodeApi.unirseGrupo(codigo),
+    mutationFn: (codigoUnirse) => prodeApi.unirseGrupo(codigoUnirse || codigo),
     onSuccess: () => {
-      queryClient.invalidateQueries(['prode-grupos']);
+      queryClient.invalidateQueries(['prode-grupos', torneoId]);
       setCodigo('');
+      if (joinCodigo) {
+        searchParams.delete('joinGrupo');
+        setSearchParams(searchParams);
+      }
       alert('Te uniste al grupo exitosamente');
     },
-    onError: (err) => alert(err.message)
+    onError: (err) => {
+      alert(err.message);
+      if (joinCodigo) {
+        searchParams.delete('joinGrupo');
+        setSearchParams(searchParams);
+      }
+    }
   });
+
+  useEffect(() => {
+    if (joinCodigo && !unirseMut.isPending && !unirseMut.isSuccess && !unirseMut.isError) {
+      unirseMut.mutate(joinCodigo);
+    }
+  }, [joinCodigo]);
 
   if (isLoading) return <p className={styles.msg}>Cargando torneos privados...</p>;
 
@@ -260,12 +285,25 @@ function ProdeGrupos({ torneoId }) {
                     <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#58a6ff' }}>{g.nombre}</h4>
                     <span style={{ fontSize: '0.8rem', color: '#8b949e' }}>Miembros: {g.miembros}</span>
                   </div>
-                  <div style={{ background: '#0d1117', padding: '4px 8px', borderRadius: '4px', border: '1px dashed #58a6ff', color: '#58a6ff', fontSize: '0.8rem', fontWeight: 'bold' }}>
-                    CÓDIGO: {g.codigo}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ background: '#0d1117', padding: '4px 8px', borderRadius: '4px', border: '1px dashed #58a6ff', color: '#58a6ff', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                      CÓDIGO: {g.codigo}
+                    </div>
+                    <button 
+                      onClick={() => {
+                        const link = `${window.location.origin}/prode?joinGrupo=${g.codigo}`;
+                        navigator.clipboard.writeText(link);
+                        alert('¡Link copiado al portapapeles!');
+                      }}
+                      style={{ padding: '4px 8px', background: '#238636', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                      title="Copiar link de invitación"
+                    >
+                      Copiar Link
+                    </button>
                   </div>
                 </div>
                 <div style={{ padding: '16px' }}>
-                  <ProdeGrupoRanking grupoId={g.id} />
+                  <ProdeGrupoRanking grupoId={g.id} torneoId={torneoId} />
                 </div>
               </div>
             ))}
@@ -276,35 +314,97 @@ function ProdeGrupos({ torneoId }) {
   );
 }
 
-function ProdeGrupoRanking({ grupoId }) {
+function ProdeGrupoRanking({ grupoId, torneoId }) {
   const { usuario } = useAuthStore();
+  const [selectedUser, setSelectedUser] = useState(null);
+
   const { data: ranking, isLoading } = useQuery({
     queryKey: ['prode-grupo-ranking', grupoId],
     queryFn: () => prodeApi.rankingGrupo(grupoId),
+  });
+
+  const { data: predicciones, isLoading: loadingPreds } = useQuery({
+    queryKey: ['predicciones-completadas', selectedUser?.id, torneoId],
+    queryFn: () => prodeApi.prediccionesCompletadas(selectedUser.id, torneoId),
+    enabled: !!selectedUser,
   });
 
   if (isLoading) return <p className={styles.msg}>Cargando ranking del grupo...</p>;
   if (!ranking || ranking.length === 0) return <p className={styles.msg}>No hay datos para este grupo.</p>;
 
   return (
-    <table className={tablaStyles.table}>
-      <thead>
-        <tr>
-          <th className={tablaStyles.thPos}>#</th>
-          <th className={tablaStyles.thEquipo}>Usuario</th>
-          <th className={tablaStyles.thPts}>PTS</th>
-        </tr>
-      </thead>
-      <tbody>
-        {ranking.map((r) => (
-          <tr key={r.id} className={`${tablaStyles.row} ${r.id === usuario?.id ? styles.userMe : ''}`}>
-            <td className={tablaStyles.tdPos}>{r.posicion}</td>
-            <td className={tablaStyles.tdEquipo} style={{ fontWeight: 600 }}>{r.nombre} {r.apellido}</td>
-            <td className={tablaStyles.tdPts}>{r.puntos}</td>
+    <>
+      <table className={tablaStyles.table}>
+        <thead>
+          <tr>
+            <th className={tablaStyles.thPos}>#</th>
+            <th className={tablaStyles.thEquipo}>Usuario</th>
+            <th className={tablaStyles.thPts}>PTS</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {ranking.map((r) => (
+            <tr key={r.id} className={`${tablaStyles.row} ${r.id === usuario?.id ? styles.userMe : ''}`}>
+              <td className={tablaStyles.tdPos}>{r.posicion}</td>
+              <td 
+                className={tablaStyles.tdEquipo} 
+                style={{ fontWeight: 600, cursor: 'pointer', textDecoration: 'underline', color: '#58a6ff' }}
+                onClick={() => setSelectedUser(r)}
+              >
+                {r.nombre} {r.apellido}
+              </td>
+              <td className={tablaStyles.tdPts}>{r.puntos}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {selectedUser && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
+          <div style={{ background: '#0d1117', border: '1px solid #30363d', borderRadius: '12px', padding: '24px', width: '90%', maxWidth: '500px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, color: '#e6edf3' }}>Predicciones de {selectedUser.nombre}</h3>
+              <button onClick={() => setSelectedUser(null)} style={{ background: 'transparent', border: 'none', color: '#8b949e', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+            </div>
+            
+            <div style={{ overflowY: 'auto', flex: 1, paddingRight: '8px' }}>
+              {loadingPreds ? (
+                <p className={styles.msg}>Cargando predicciones...</p>
+              ) : !predicciones || predicciones.length === 0 ? (
+                <p className={styles.msg}>No hay predicciones en partidos finalizados.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {predicciones.map((p) => (
+                    <div key={p.partido_id} style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#8b949e', borderBottom: '1px solid #30363d', paddingBottom: '4px' }}>
+                        <span>Fecha {p.fecha_numero}</span>
+                        {p.puntos_obtenidos != null && (
+                          <span style={{ color: p.puntos_obtenidos === 6 ? '#3fb950' : p.puntos_obtenidos === 3 ? '#d29922' : '#f85149', fontWeight: 'bold' }}>
+                            +{p.puntos_obtenidos} pts
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ flex: 1, textAlign: 'right', fontWeight: 600, color: '#c9d1d9' }}>{p.local_nombre}</span>
+                        <div style={{ margin: '0 16px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#e6edf3' }}>
+                            {p.pronostico_local} - {p.pronostico_visita}
+                          </span>
+                          <span style={{ fontSize: '0.7rem', color: '#8b949e' }}>
+                            Real: {p.resultado_local} - {p.resultado_visita}
+                          </span>
+                        </div>
+                        <span style={{ flex: 1, fontWeight: 600, color: '#c9d1d9' }}>{p.visita_nombre}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -391,7 +491,13 @@ export default function Prode() {
           </div>
 
           <div className={styles.partidosList}>
-            {loadingPartidos && <p className={styles.msg}>Cargando partidos...</p>}
+            {loadingPartidos && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="skeleton" style={{ height: '88px', borderRadius: '12px' }} />
+                ))}
+              </div>
+            )}
             
             {!loadingPartidos && partidos?.length === 0 && (
               <p className={styles.msg}>No hay partidos cargados en esta fecha.</p>

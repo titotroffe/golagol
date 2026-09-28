@@ -49,7 +49,9 @@ function EquipoPanel({
           try {
             const data = JSON.parse(ev.detalle);
             if (data.entra_id === jId) haEntrado = true;
-          } catch(e){}
+          } catch(e){
+            console.warn('Error parseando detalle de evento CAMBIO:', e);
+          }
         }
       }
     });
@@ -219,8 +221,7 @@ function EquipoPanel({
           <button onClick={()=>setPendingAction('GOL')} className={styles.btnTeamAction}>Gol</button>
           <button onClick={() => {
             const currentMin = tiempoActual?.mins || 0;
-            const minStr = prompt("¿En qué minuto es el penal?", currentMin.toString());
-            registrarEventoMut.mutate({tipo: 'PENAL_A_FAVOR', equipo_id: equipoId, detalle: esLocal ? 'Local' : 'Visita', minuto: parseInt(minStr) || currentMin});
+            registrarEventoMut.mutate({tipo: 'PENAL_A_FAVOR', equipo_id: equipoId, detalle: esLocal ? 'Local' : 'Visita', minuto: currentMin});
             setPendingAction('PATEAR_PENAL');
           }} className={styles.btnTeamAction}>Penal</button>
           <button onClick={()=>setPendingAction('AMARILLA')} className={styles.btnTeamAction}>Amarilla</button>
@@ -371,51 +372,116 @@ export default function GolAGol() {
     onSuccess: () => queryClient.invalidateQueries(['partido', id])
   });
 
+  const cambiarEstadoMut = useMutation({
+    mutationFn: ({ estado, motivo }) => partidosApi.cambiarEstado(id, { estado, motivo }),
+    onSuccess: () => queryClient.invalidateQueries(['partido', id])
+  });
+
   const [tiempoState, setTiempoState] = useState({ mins: 0, secs: 0, extra: null });
+  const [tiempoExtraInput, setTiempoExtraInput] = useState('');
+  const [showTiempoExtra, setShowTiempoExtra] = useState(false);
+  const [eventoToDelete, setEventoToDelete] = useState(null);
+  const [showSuspendModal, setShowSuspendModal] = useState(false);
+  const [motivoSuspension, setMotivoSuspension] = useState('');
+  const [minutoReanudacion, setMinutoReanudacion] = useState('');
 
   useEffect(() => {
     if (!partido || !partido.eventos) return;
 
     const interval = setInterval(() => {
       const evs = partido.eventos;
-      const inicio1T = evs.find(e => e.tipo === 'INICIO_PARTIDO');
-      const fin1T = evs.find(e => e.tipo === 'FIN_1T');
-      const inicio2T = evs.find(e => e.tipo === 'INICIO_2T');
+      const inicio1T   = evs.find(e => e.tipo === 'INICIO_PARTIDO');
+      const fin1T      = evs.find(e => e.tipo === 'FIN_1T');
+      const inicio2T   = evs.find(e => e.tipo === 'INICIO_2T');
       const finPartido = evs.find(e => e.tipo === 'FIN_PARTIDO');
-      const extraTime = evs.filter(e => e.tipo === 'TIEMPO_EXTRA').pop(); // el último
-
       let totalSecs = 0;
       let running = false;
+      let lastStartTime = null;
+      let isHalftime = false;
+      let isFinished = false;
+      let currentExtraTime = null;
+      
       const now = Date.now();
 
-      if (inicio1T && !fin1T) {
-        const t1 = new Date(inicio1T.registrado_en + 'Z').getTime();
-        totalSecs = Math.floor((now - t1) / 1000);
-        running = true;
-      } else if (fin1T && !inicio2T) {
-        totalSecs = 45 * 60; // Pausado en 45:00
-      } else if (inicio2T && !finPartido) {
-        const t2 = new Date(inicio2T.registrado_en + 'Z').getTime();
-        totalSecs = (45 * 60) + Math.floor((now - t2) / 1000);
-        running = true;
-      } else if (finPartido) {
-        totalSecs = 90 * 60; // Clavado en 90:00
+      // Procesar eventos cronológicamente para calcular el tiempo neto
+      const evsChronological = [...partido.eventos].sort((a,b) => new Date(a.registrado_en) - new Date(b.registrado_en));
+      const fueSuspendido = evsChronological.some(e => e.tipo === 'SUSPENSION');
+
+      evsChronological.forEach(ev => {
+        const evTime = new Date(ev.registrado_en + 'Z').getTime();
+
+        if (ev.tipo === 'INICIO_PARTIDO') {
+          lastStartTime = evTime;
+          running = true;
+          isHalftime = false;
+          currentExtraTime = null;
+        } else if (ev.tipo === 'FIN_1T') {
+          if (running) totalSecs += Math.floor((evTime - lastStartTime) / 1000);
+          running = false;
+          isHalftime = true;
+          if (!fueSuspendido) totalSecs = 45 * 60; // Forzar a 45:00 solo en partidos normales
+        } else if (ev.tipo === 'INICIO_2T') {
+          lastStartTime = evTime;
+          running = true;
+          isHalftime = false;
+          currentExtraTime = null; // La adición del 1T no aplica al 2T
+          if (!fueSuspendido) totalSecs = 45 * 60; // Base 45:00 solo en normales
+        } else if (ev.tipo === 'FIN_PARTIDO') {
+          if (running) totalSecs += Math.floor((evTime - lastStartTime) / 1000);
+          running = false;
+          isFinished = true;
+          if (!fueSuspendido) totalSecs = 90 * 60; // Forzar a 90:00
+        } else if (ev.tipo === 'SUSPENSION') {
+          if (running) {
+            totalSecs += Math.floor((evTime - lastStartTime) / 1000);
+            running = false;
+          }
+        } else if (ev.tipo === 'REANUDACION') {
+          // Solo retomar el reloj si se suspendió durante el juego
+          if (!isHalftime && !isFinished) {
+            lastStartTime = evTime;
+            running = true;
+            if (ev.detalle && ev.detalle.startsWith('{')) {
+              try {
+                const d = JSON.parse(ev.detalle);
+                if (d.forzar_minuto !== null && d.forzar_minuto !== undefined) {
+                  totalSecs = parseInt(d.forzar_minuto, 10) * 60;
+                }
+              } catch (e) {}
+            }
+          }
+        } else if (ev.tipo === 'TIEMPO_EXTRA') {
+          currentExtraTime = ev.detalle;
+        }
+      });
+
+      if (running) {
+        totalSecs += Math.floor((now - lastStartTime) / 1000);
       }
 
       setTiempoState({
         mins: Math.floor(totalSecs / 60),
         secs: totalSecs % 60,
-        extra: extraTime ? extraTime.detalle : null
+        extra: currentExtraTime
       });
 
-      if (!running && (finPartido || (!inicio1T && !inicio2T))) clearInterval(interval);
+      if (isFinished || (!evs.some(e => e.tipo === 'INICIO_PARTIDO') && !evs.some(e => e.tipo === 'INICIO_2T'))) clearInterval(interval);
 
     }, 1000);
 
     return () => clearInterval(interval);
   }, [partido]);
 
-  if (loadP || loadA) return <p className={styles.msg}>Cargando entorno en vivo...</p>;
+  if (loadP || loadA) return (
+    <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div className="skeleton" style={{ height: '80px', borderRadius: '12px' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="skeleton" style={{ height: '120px', borderRadius: '10px' }} />
+        ))}
+      </div>
+    </div>
+  );
   if (!partido) return <p className={styles.msg}>Partido no encontrado.</p>;
 
   return (
@@ -444,7 +510,9 @@ export default function GolAGol() {
           </div>
         </div>
         <div className={styles.estadoIndicator}>
-          {partido.estado === 'pendiente' ? 'Esperando inicio' : (partido.estado === 'en_curso' ? 'EN VIVO' : 'FINALIZADO')}
+          {partido.estado === 'pendiente' ? 'Esperando inicio' : 
+           partido.estado === 'en_curso' ? 'EN VIVO' : 
+           partido.estado === 'suspendido' ? 'SUSPENDIDO' : 'FINALIZADO'}
         </div>
       </div>
 
@@ -469,10 +537,57 @@ export default function GolAGol() {
               <button onClick={() => regEvento.mutate({tipo: 'FIN_1T', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Fin 1T</button>
               <button onClick={() => regEvento.mutate({tipo: 'INICIO_2T', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Inicio 2T</button>
               <button onClick={() => regEvento.mutate({tipo: 'FIN_PARTIDO', equipo_id: null, detalle: ''})} className={styles.btnMatchState}>Fin Partido</button>
-              <button onClick={() => {
-                const min = prompt("Cuantos minutos agrega el arbitro?");
-                if (min) regEvento.mutate({tipo: 'TIEMPO_EXTRA', equipo_id: null, detalle: min});
-              }} className={styles.btnMatchState}>Adicion</button>
+              
+              {partido.estado !== 'suspendido' && partido.estado !== 'finalizado' && (
+                <button 
+                  onClick={() => setShowSuspendModal(true)} 
+                  className={styles.btnMatchState} 
+                  style={{ background: '#4c1d1d', borderColor: '#f85149' }}
+                >
+                  Suspender
+                </button>
+              )}
+              {partido.estado === 'suspendido' && (
+                <button 
+                  onClick={() => setShowSuspendModal(true)} 
+                  className={styles.btnMatchState}
+                  style={{ background: '#1b4a24', borderColor: '#238636' }}
+                >
+                  Reanudar
+                </button>
+              )}
+
+              {isAdmin && !showTiempoExtra && partido.estado !== 'suspendido' && (
+                <button onClick={() => setShowTiempoExtra(true)} className={styles.btnMatchState}>Adicion</button>
+              )}
+              {isAdmin && showTiempoExtra && (
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <input
+                    type="number"
+                    min="1" max="20"
+                    placeholder="min"
+                    value={tiempoExtraInput}
+                    onChange={e => setTiempoExtraInput(e.target.value)}
+                    style={{ width: '60px', padding: '4px 6px', borderRadius: '4px', border: '1px solid #58a6ff', background: '#0d1117', color: 'white', fontSize: '0.9rem' }}
+                    autoFocus
+                  />
+                  <button
+                    className={styles.btnMatchState}
+                    onClick={() => {
+                      if (tiempoExtraInput) {
+                        regEvento.mutate({tipo: 'TIEMPO_EXTRA', equipo_id: null, detalle: tiempoExtraInput});
+                        setTiempoExtraInput('');
+                        setShowTiempoExtra(false);
+                      }
+                    }}
+                  >OK</button>
+                  <button
+                    className={styles.btnMatchState}
+                    style={{ background: 'transparent', border: '1px solid #30363d' }}
+                    onClick={() => { setShowTiempoExtra(false); setTiempoExtraInput(''); }}
+                  >✕</button>
+                </div>
+              )}
             </div>
           )}
           <h3 className={styles.feedTitle}>Eventos Registrados</h3>
@@ -483,7 +598,13 @@ export default function GolAGol() {
                 try {
                   const d = JSON.parse(ev.detalle);
                   subText = `Entró ${d.entra_nombre}`;
-                } catch(e){}
+                } catch(e) {}
+              }
+              if ((ev.tipo === 'SUSPENSION' || ev.tipo === 'REANUDACION') && ev.detalle && ev.detalle.startsWith('{')) {
+                try {
+                  const d = JSON.parse(ev.detalle);
+                  subText = d.motivo || '';
+                } catch(e) {}
               }
 
               return (
@@ -518,11 +639,7 @@ export default function GolAGol() {
                   {isAdmin && (
                     <button 
                       title="Eliminar evento" 
-                      onClick={() => {
-                        if (window.confirm("¿Seguro que querés eliminar este evento?")) {
-                          eliminarEventoMut.mutate(ev.id);
-                        }
-                      }} 
+                      onClick={() => setEventoToDelete(ev)}
                       className={styles.btnDeleteEvent}
                     >
                       🗑️
@@ -550,6 +667,112 @@ export default function GolAGol() {
         />
       </div>
 
+      {/* Modal de confirmación para eliminar evento */}
+      {eventoToDelete && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#161b22', border: '1px solid #f85149', borderRadius: '12px', padding: '24px', width: '90%', maxWidth: '380px', textAlign: 'center' }}>
+            <p style={{ color: '#e6edf3', margin: '0 0 8px 0', fontWeight: 600, fontSize: '1rem' }}>¿Eliminar este evento?</p>
+            <p style={{ color: '#8b949e', margin: '0 0 20px 0', fontSize: '0.85rem' }}>
+              <strong>{eventoToDelete.tipo}</strong>
+              {eventoToDelete.jugador_apellido || eventoToDelete.jugador_nombre
+                ? ` — ${eventoToDelete.jugador_apellido || eventoToDelete.jugador_nombre}`
+                : ''}
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setEventoToDelete(null)}
+                style={{ flex: 1, padding: '8px', background: 'transparent', border: '1px solid #30363d', borderRadius: '6px', color: '#8b949e', cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  eliminarEventoMut.mutate(eventoToDelete.id);
+                  setEventoToDelete(null);
+                }}
+                style={{ flex: 1, padding: '8px', background: '#f85149', border: 'none', borderRadius: '6px', color: 'white', fontWeight: 700, cursor: 'pointer' }}
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para suspender/reanudar */}
+      {showSuspendModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '12px', padding: '24px', width: '90%', maxWidth: '400px' }}>
+            <p style={{ color: '#e6edf3', margin: '0 0 16px 0', fontWeight: 600, fontSize: '1.1rem' }}>
+              {partido.estado === 'suspendido' ? 'Reanudar Partido' : 'Suspender Partido'}
+            </p>
+            
+            <input 
+              type="text" 
+              placeholder={partido.estado === 'suspendido' ? 'Motivo de reanudación (opcional)' : 'Motivo de suspensión (ej. lluvia, incidentes)'} 
+              value={motivoSuspension}
+              onChange={e => setMotivoSuspension(e.target.value)}
+              style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #30363d', background: '#0d1117', color: 'white', marginBottom: partido.estado === 'suspendido' ? '10px' : '20px' }}
+              autoFocus
+            />
+
+            {partido.estado === 'suspendido' && (
+              <input 
+                type="number" 
+                placeholder="Continuar desde minuto... (ej: 0, 45, o dejar vacío)" 
+                value={minutoReanudacion}
+                onChange={e => setMinutoReanudacion(e.target.value)}
+                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #30363d', background: '#0d1117', color: 'white', marginBottom: '20px' }}
+                min="0"
+              />
+            )}
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setShowSuspendModal(false);
+                  setMotivoSuspension('');
+                }}
+                style={{ padding: '8px 16px', background: 'transparent', border: '1px solid #30363d', borderRadius: '6px', color: '#8b949e', cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+              <button
+                disabled={cambiarEstadoMut.isPending}
+                onClick={() => {
+                  const nuevoEstado = partido.estado === 'suspendido' ? 'en_curso' : 'suspendido';
+                  
+                  const detalleObj = { motivo: motivoSuspension };
+                  if (nuevoEstado === 'en_curso' && minutoReanudacion !== '') {
+                    detalleObj.forzar_minuto = parseInt(minutoReanudacion, 10);
+                  }
+
+                  cambiarEstadoMut.mutate({ 
+                    estado: nuevoEstado, 
+                    motivo: JSON.stringify(detalleObj), 
+                    minuto: minutoReanudacion !== '' ? parseInt(minutoReanudacion, 10) : tiempoState.mins 
+                  });
+                  
+                  setShowSuspendModal(false);
+                  setMotivoSuspension('');
+                  setMinutoReanudacion('');
+                }}
+                style={{ 
+                  padding: '8px 16px', 
+                  border: 'none', 
+                  borderRadius: '6px', 
+                  color: 'white', 
+                  fontWeight: 600, 
+                  cursor: 'pointer',
+                  background: partido.estado === 'suspendido' ? '#238636' : '#f85149'
+                }}
+              >
+                {partido.estado === 'suspendido' ? 'Reanudar' : 'Suspender'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

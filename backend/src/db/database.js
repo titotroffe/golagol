@@ -41,6 +41,7 @@ db.exec(`
     equipo_id        INTEGER REFERENCES equipos(id),
     rol              TEXT NOT NULL DEFAULT 'usuario', -- 'usuario' | 'admin' | 'reportero'
     activo           INTEGER NOT NULL DEFAULT 1,
+    avatar_url       TEXT,
     creado_en        TEXT DEFAULT (datetime('now'))
   );
 
@@ -105,6 +106,8 @@ db.exec(`
     estado          TEXT NOT NULL DEFAULT 'pendiente', -- 'pendiente' | 'en_curso' | 'finalizado' | 'suspendido'
     goles_local     INTEGER,               -- NULL hasta que termine
     goles_visita    INTEGER,               -- NULL hasta que termine
+    por_escritorio  INTEGER NOT NULL DEFAULT 0, -- 1 si el resultado fue por escritorio
+    ganador_escritorio TEXT,               -- 'local' | 'visita' | NULL
     creado_en       TEXT DEFAULT (datetime('now'))
   );
 
@@ -212,6 +215,16 @@ db.exec(`
   );
 
 `);
+
+// Migraciones automáticas simples
+const migraciones = [
+  'ALTER TABLE usuarios ADD COLUMN avatar_url TEXT;',
+  'ALTER TABLE partidos ADD COLUMN por_escritorio INTEGER NOT NULL DEFAULT 0;',
+  'ALTER TABLE partidos ADD COLUMN ganador_escritorio TEXT;',
+];
+migraciones.forEach(sql => {
+  try { db.exec(sql); } catch (_) { /* columna ya existe */ }
+});
 
 console.log('✅ Base de datos inicializada correctamente en:', DB_PATH);
 

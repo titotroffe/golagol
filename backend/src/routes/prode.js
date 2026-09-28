@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 const db = require('../db/database');
 const { authMiddleware } = require('../middleware/auth');
 
@@ -93,6 +94,7 @@ router.get('/mis-puntos/:torneo_id', authMiddleware, (req, res) => {
 
 // GET /api/prode/ranking/:torneo_id - Ranking global de jugadores
 router.get('/ranking/:torneo_id', (req, res) => {
+  const torneo_id = req.params.torneo_id;
   const ranking = db.prepare(`
     SELECT 
       u.id, u.nombre, u.apellido, u.usuario,
@@ -102,13 +104,17 @@ router.get('/ranking/:torneo_id', (req, res) => {
       COUNT(CASE WHEN pr.puntos_obtenidos = 6 THEN 1 END) AS exactos
     FROM usuarios u
     LEFT JOIN equipos e ON e.id = u.equipo_id
-    LEFT JOIN pronosticos pr ON pr.usuario_id = u.id
-    LEFT JOIN partidos p ON p.id = pr.partido_id
-    LEFT JOIN fechas f ON f.id = p.fecha_id AND f.torneo_id = ?
+    LEFT JOIN (
+      SELECT pr2.*
+      FROM pronosticos pr2
+      JOIN partidos p2 ON p2.id = pr2.partido_id
+      JOIN fechas f2 ON f2.id = p2.fecha_id
+      WHERE f2.torneo_id = ?
+    ) pr ON pr.usuario_id = u.id
     WHERE u.activo = 1
     GROUP BY u.id
     ORDER BY puntos DESC, exactos DESC, u.apellido ASC
-  `).all(req.params.torneo_id);
+  `).all(torneo_id);
 
   ranking.forEach((u, idx) => u.posicion = idx + 1);
   res.json(ranking);
@@ -123,8 +129,8 @@ router.post('/grupos', authMiddleware, (req, res) => {
   const { nombre, torneo_id } = req.body;
   if (!nombre || !torneo_id) return res.status(400).json({ error: 'Nombre y torneo_id son requeridos' });
 
-  // Generar código único de 6 caracteres
-  const codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
+  // Generar código único complejo de 12 caracteres
+  const codigo = crypto.randomBytes(6).toString('hex').toUpperCase();
 
   const result = db.prepare(`
     INSERT INTO prode_grupos (nombre, codigo, torneo_id, creador_id) VALUES (?, ?, ?, ?)
@@ -189,6 +195,85 @@ router.get('/grupos/:id/ranking', authMiddleware, (req, res) => {
 
   ranking.forEach((u, idx) => u.posicion = idx + 1);
   res.json(ranking);
+});
+
+// GET /api/prode/partido/:partido_id/predicciones-grupos - Predicciones de mis grupos
+router.get('/partido/:partido_id/predicciones-grupos', authMiddleware, (req, res) => {
+  const partido_id = req.params.partido_id;
+  const usuario_id = req.usuario.id;
+
+  const partido = db.prepare('SELECT estado, fecha_hora FROM partidos WHERE id = ?').get(partido_id);
+  if (!partido) return res.status(404).json({ error: 'Partido no encontrado' });
+  
+  const matchTime = partido.fecha_hora ? new Date(partido.fecha_hora) : null;
+  const isTooLate = matchTime ? (matchTime - new Date()) <= 10 * 60000 : false;
+  const isClosed = partido.estado !== 'pendiente';
+  const isLocked = isClosed || isTooLate;
+
+  if (!isLocked) {
+    return res.status(403).json({ error: 'El partido aún no comenzó. No se pueden ver las predicciones.' });
+  }
+
+  const predicciones = db.prepare(`
+    SELECT DISTINCT
+      u.id, u.nombre, u.apellido,
+      pr.goles_local, pr.goles_visita, pr.puntos_obtenidos,
+      g.nombre AS grupo_nombre
+    FROM prode_grupos_miembros gm_yo
+    JOIN prode_grupos g ON g.id = gm_yo.grupo_id
+    JOIN prode_grupos_miembros gm_otros ON gm_otros.grupo_id = g.id
+    JOIN usuarios u ON u.id = gm_otros.usuario_id
+    LEFT JOIN pronosticos pr ON pr.usuario_id = u.id AND pr.partido_id = ?
+    WHERE gm_yo.usuario_id = ?
+    ORDER BY g.nombre, pr.puntos_obtenidos DESC, u.nombre
+  `).all(partido_id, usuario_id);
+
+  res.json(predicciones);
+});
+
+// GET /api/prode/usuario/:usuario_id/torneo/:torneo_id/predicciones-completadas
+router.get('/usuario/:usuario_id/torneo/:torneo_id/predicciones-completadas', authMiddleware, (req, res) => {
+  const { usuario_id, torneo_id } = req.params;
+  const solicitante_id = req.usuario.id;
+
+  // Permitir ver las propias predicciones sin restricción
+  if (String(solicitante_id) !== String(usuario_id)) {
+    // Verificar que el solicitante comparte al menos un grupo privado con el usuario_id consultado
+    const grupoCompartido = db.prepare(`
+      SELECT 1
+      FROM prode_grupos_miembros gm1
+      JOIN prode_grupos_miembros gm2 ON gm2.grupo_id = gm1.grupo_id
+      JOIN prode_grupos g ON g.id = gm1.grupo_id
+      WHERE gm1.usuario_id = ? AND gm2.usuario_id = ? AND g.torneo_id = ?
+      LIMIT 1
+    `).get(solicitante_id, usuario_id, torneo_id);
+
+    if (!grupoCompartido) {
+      return res.status(403).json({ error: 'No tenés permiso para ver las predicciones de este usuario.' });
+    }
+  }
+
+  const predicciones = db.prepare(`
+    SELECT 
+      pr.goles_local AS pronostico_local,
+      pr.goles_visita AS pronostico_visita,
+      pr.puntos_obtenidos,
+      p.id AS partido_id,
+      p.goles_local AS resultado_local,
+      p.goles_visita AS resultado_visita,
+      el.nombre AS local_nombre, 
+      ev.nombre AS visita_nombre,
+      f.numero AS fecha_numero
+    FROM pronosticos pr
+    JOIN partidos p ON p.id = pr.partido_id
+    JOIN equipos el ON el.id = p.equipo_local_id
+    JOIN equipos ev ON ev.id = p.equipo_visita_id
+    JOIN fechas f ON f.id = p.fecha_id
+    WHERE pr.usuario_id = ? AND f.torneo_id = ? AND p.estado != 'pendiente'
+    ORDER BY f.numero DESC, p.id DESC
+  `).all(usuario_id, torneo_id);
+
+  res.json(predicciones);
 });
 
 module.exports = router;

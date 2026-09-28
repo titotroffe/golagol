@@ -9,7 +9,6 @@ export const useAuthStore = create(
       token: null,
 
       login: (usuario, token) => {
-        localStorage.setItem('token', token);
         set({ usuario, token });
       },
 
@@ -18,7 +17,6 @@ export const useAuthStore = create(
       },
 
       logout: () => {
-        localStorage.removeItem('token');
         set({ usuario: null, token: null });
       },
     }),

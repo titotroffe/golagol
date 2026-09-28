@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
@@ -18,8 +19,9 @@ const server = http.createServer(app);
 // MIDDLEWARES
 // ─────────────────────────────────────────
 app.use(cors({
-  origin: '*', // En producción restringir al dominio real
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
 }));
 app.use(express.json());
 

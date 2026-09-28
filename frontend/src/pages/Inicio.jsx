@@ -50,7 +50,18 @@ export default function Inicio() {
   });
 
   if (!torneoActivo) return <p className={styles.msg}>Seleccioná un torneo.</p>;
-  if (isLoading) return <p className={styles.msg}>Cargando inicio...</p>;
+  if (isLoading) return (
+    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div className="skeleton" style={{ height: '28px', width: '40%', marginBottom: '4px' }} />
+      {[...Array(3)].map((_, i) => (
+        <div key={i} className="skeleton" style={{ height: '96px', borderRadius: '12px' }} />
+      ))}
+      <div className="skeleton" style={{ height: '28px', width: '50%', marginTop: '12px', marginBottom: '4px' }} />
+      {[...Array(2)].map((_, i) => (
+        <div key={i} className="skeleton" style={{ height: '72px', borderRadius: '12px' }} />
+      ))}
+    </div>
+  );
   if (error) return <p className={styles.msg}>Error al cargar datos.</p>;
 
   const { enVivo, proximos, sancionados } = data;

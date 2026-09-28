@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../api';
 import { useAuthStore } from '../store';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { equiposApi } from '../api';
 import styles from './Auth.module.css';
@@ -17,11 +17,14 @@ export default function Registro() {
     queryFn: equiposApi.listar,
   });
 
+  const location = useLocation();
+
   const mutation = useMutation({
     mutationFn: authApi.registro,
     onSuccess: (data) => {
       login(data.usuario, data.token);
-      navigate('/');
+      const from = location.state?.from?.pathname + (location.state?.from?.search || '') || '/';
+      navigate(from);
     },
   });
 
@@ -141,7 +144,7 @@ export default function Registro() {
           </button>
 
           <p className={styles.linkText}>
-            ¿Ya tenés cuenta? <Link to="/login" className={styles.link}>Iniciar sesión</Link>
+            ¿Ya tenés cuenta? <Link to="/login" state={{ from: location.state?.from }} className={styles.link}>Iniciar sesión</Link>
           </p>
         </form>
       </div>

@@ -1,8 +1,14 @@
 const API_BASE = '/api';
 
 function getAuthHeader() {
-  const token = localStorage.getItem('token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  // Lee el token del storage persistido por Zustand (clave 'auth-storage')
+  try {
+    const stored = localStorage.getItem('auth-storage');
+    const token = stored ? JSON.parse(stored)?.state?.token : null;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
 }
 
 async function request(path, options = {}) {
@@ -87,6 +93,8 @@ export const partidosApi = {
     request(`/partidos/${id}/escritorio`, { method: 'POST', body: JSON.stringify({ ganador_escritorio }) }),
   actualizarHorario: (id, body) =>
     request(`/partidos/${id}/horario`, { method: 'PUT', body: JSON.stringify(body) }),
+  cambiarEstado: (id, body) =>
+    request(`/partidos/${id}/estado`, { method: 'PUT', body: JSON.stringify(body) }),
   alineaciones: (id) => request(`/partidos/${id}/alineaciones`),
   agregarAlineacion: (id, body) =>
     request(`/partidos/${id}/alineaciones`, { method: 'POST', body: JSON.stringify(body) }),
@@ -107,6 +115,8 @@ export const prodeApi = {
     request('/prode/grupos/unirse', { method: 'POST', body: JSON.stringify({ codigo }) }),
   misGrupos: () => request('/prode/grupos/mis-grupos'),
   rankingGrupo: (grupoId) => request(`/prode/grupos/${grupoId}/ranking`),
+  prediccionesGrupos: (partidoId) => request(`/prode/partido/${partidoId}/predicciones-grupos`),
+  prediccionesCompletadas: (usuarioId, torneoId) => request(`/prode/usuario/${usuarioId}/torneo/${torneoId}/predicciones-completadas`),
 };
 
 // ── SANCIONES ─────────────────────────────────────────

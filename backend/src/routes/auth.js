@@ -1,10 +1,23 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 const db = require('../db/database');
+const { JWT_SECRET } = require('../config');
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10, // 10 intentos por IP
+  message: { error: 'Demasiados intentos de inicio de sesión, intentá de nuevo en 15 minutos.' }
+});
+
+const recoverLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 5, // 5 intentos por IP
+  message: { error: 'Demasiados intentos de recuperación de contraseña, intentá de nuevo más tarde.' }
+});
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'prode_liga_nicoleña_secret_2025';
 
 // ─────────────────────────────────────────
 // POST /api/auth/registro
@@ -46,7 +59,7 @@ router.post('/registro', (req, res) => {
 // ─────────────────────────────────────────
 // POST /api/auth/login
 // ─────────────────────────────────────────
-router.post('/login', (req, res) => {
+router.post('/login', loginLimiter, (req, res) => {
   const { usuario, password } = req.body;
 
   if (!usuario || !password) {
@@ -84,7 +97,7 @@ router.post('/login', (req, res) => {
 // POST /api/auth/recuperar
 // (Simulación simple: si coincide usuario y email, permite cambiar la contraseña directamente)
 // ─────────────────────────────────────────
-router.post('/recuperar', (req, res) => {
+router.post('/recuperar', recoverLimiter, (req, res) => {
   const { usuario, email, newPassword } = req.body;
 
   if (!usuario || !email || !newPassword) {

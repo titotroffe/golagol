@@ -18,6 +18,7 @@ function PartidoAdminCard({ partido }) {
   const [nuevoGolVisita, setNuevoGolVisita] = useState('');
   const [porEscritorio, setPorEscritorio] = useState(partido.por_escritorio === 1 || partido.ganador_escritorio != null);
   const [ganadorEscritorio, setGanadorEscritorio] = useState(partido.ganador_escritorio || 'local');
+  const [showConfirmFinal, setShowConfirmFinal] = useState(false);
 
   // Sincronizar estado local
   useEffect(() => {
@@ -107,14 +108,17 @@ function PartidoAdminCard({ partido }) {
       alert('Faltan cargar goles.');
       return;
     }
-    if (window.confirm(`¿Confirmar finalización de partido con resultado ${partido.local_nombre} ${localStr} - ${visitaStr} ${partido.visita_nombre}? Se calcularán los puntos del Prode para todos los usuarios y NO se puede deshacer.`)) {
-      cargarResultadoMut.mutate({
-        goles_local: parseInt(localStr, 10),
-        goles_visita: parseInt(visitaStr, 10),
-        por_escritorio: porEscritorio,
-        ganador_escritorio: porEscritorio ? ganadorEscritorio : null
-      });
-    }
+    setShowConfirmFinal(true);
+  };
+
+  const ejecutarCarga = () => {
+    cargarResultadoMut.mutate({
+      goles_local: parseInt(localStr, 10),
+      goles_visita: parseInt(visitaStr, 10),
+      por_escritorio: porEscritorio,
+      ganador_escritorio: porEscritorio ? ganadorEscritorio : null
+    });
+    setShowConfirmFinal(false);
   };
 
   return (
@@ -333,6 +337,37 @@ function PartidoAdminCard({ partido }) {
                   + Roja
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación para cargar resultado final */}
+      {showConfirmFinal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#161b22', border: '1px solid #e3b341', borderRadius: '12px', padding: '28px', width: '90%', maxWidth: '420px' }}>
+            <p style={{ color: '#e6edf3', fontWeight: 700, fontSize: '1.05rem', margin: '0 0 10px 0' }}>
+              ⚠️ Confirmar Resultado Final
+            </p>
+            <p style={{ color: '#8b949e', fontSize: '0.9rem', margin: '0 0 16px 0' }}>
+              <strong style={{ color: '#e6edf3' }}>{partido.local_nombre} {localStr} – {visitaStr} {partido.visita_nombre}</strong>
+              <br />
+              Se calcularán los puntos del Prode para todos los usuarios. Esta acción <strong style={{ color: '#f85149' }}>no se puede deshacer</strong>.
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setShowConfirmFinal(false)}
+                style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #30363d', borderRadius: '6px', color: '#8b949e', cursor: 'pointer', fontWeight: 600 }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={ejecutarCarga}
+                disabled={cargarResultadoMut.isPending}
+                style={{ flex: 1, padding: '10px', background: '#1f6feb', border: 'none', borderRadius: '6px', color: 'white', cursor: 'pointer', fontWeight: 700 }}
+              >
+                {cargarResultadoMut.isPending ? 'Guardando...' : 'Confirmar'}
+              </button>
             </div>
           </div>
         </div>

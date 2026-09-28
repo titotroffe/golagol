@@ -30,7 +30,7 @@ router.get('/:id', (req, res) => {
     LEFT JOIN jugadores j ON j.id = ep.jugador_id
     LEFT JOIN equipos e ON e.id = ep.equipo_id
     WHERE ep.partido_id = ?
-    ORDER BY ep.minuto ASC
+    ORDER BY ep.minuto ASC, ep.id ASC
   `).all(req.params.id);
 
   res.json({ ...partido, eventos });
@@ -162,34 +162,24 @@ router.put('/:id/resultado', authMiddleware, adminOReportero, (req, res) => {
     UPDATE partidos SET goles_local = ?, goles_visita = ?, estado = 'finalizado', por_escritorio = ?, ganador_escritorio = ? WHERE id = ?
   `).run(goles_local, goles_visita, por_escritorio ? 1 : 0, ganador_escritorio || null, partido_id);
 
-  // Calcular y actualizar puntos de pronósticos automáticamente
-  const pronosticos = db.prepare('SELECT * FROM pronosticos WHERE partido_id = ?').all(partido_id);
+  // Calcular y actualizar puntos de pronósticos automáticamente usando SQLite nativo (Bulk Update)
+  db.prepare(`
+    UPDATE pronosticos
+    SET 
+      puntos_obtenidos = CASE
+        WHEN goles_local = ? AND goles_visita = ? THEN 6
+        WHEN SIGN(goles_local - goles_visita) = SIGN(? - ?) THEN 3
+        ELSE 0
+      END,
+      calculado_en = datetime('now')
+    WHERE partido_id = ?
+  `).run(goles_local, goles_visita, goles_local, goles_visita, partido_id);
 
-  const actualizarPuntos = db.transaction(() => {
-    pronosticos.forEach(p => {
-      let puntos = 0;
-
-      const acertoExacto = p.goles_local === goles_local && p.goles_visita === goles_visita;
-      if (acertoExacto) {
-        puntos = 6;
-      } else {
-        const signoReal     = Math.sign(goles_local - goles_visita);
-        const signoPronostico = Math.sign(p.goles_local - p.goles_visita);
-        if (signoReal === signoPronostico) puntos = 3;
-      }
-
-      db.prepare(`
-        UPDATE pronosticos SET puntos_obtenidos = ?, calculado_en = datetime('now')
-        WHERE id = ?
-      `).run(puntos, p.id);
-    });
-  });
-
-  actualizarPuntos();
+  const pronosticosCount = db.prepare('SELECT count(*) as count FROM pronosticos WHERE partido_id = ?').get(partido_id).count;
 
   res.json({
     ok: true,
-    mensaje: `Resultado guardado. Se calcularon puntos para ${pronosticos.length} pronósticos.`
+    mensaje: `Resultado guardado. Se calcularon puntos para ${pronosticosCount} pronósticos.`
   });
 });
 
@@ -222,6 +212,59 @@ router.put('/:id/horario', authMiddleware, adminOReportero, (req, res) => {
   `).run(fecha_hora || null, cancha || null, partido_id);
 
   res.json({ ok: true, mensaje: 'Horario y cancha actualizados' });
+});
+
+// ─────────────────────────────────────────
+// ADMIN: PUT /api/partidos/:id/estado
+// Cambiar el estado de un partido: 'suspendido' | 'en_curso' | 'pendiente'
+// Permite suspender un partido en curso y luego reanudarlo
+// ─────────────────────────────────────────
+router.put('/:id/estado', authMiddleware, soloAdmin, (req, res) => {
+  const { estado, motivo, minuto } = req.body;
+  const partido_id = req.params.id;
+
+  const estadosPermitidos = ['suspendido', 'en_curso', 'pendiente'];
+  if (!estadosPermitidos.includes(estado)) {
+    return res.status(400).json({ error: `Estado inválido. Valores permitidos: ${estadosPermitidos.join(', ')}` });
+  }
+
+  const partido = db.prepare('SELECT * FROM partidos WHERE id = ?').get(partido_id);
+  if (!partido) return res.status(404).json({ error: 'Partido no encontrado' });
+
+  // No se puede cambiar el estado de un partido ya finalizado
+  if (partido.estado === 'finalizado') {
+    return res.status(403).json({ error: 'No se puede cambiar el estado de un partido finalizado' });
+  }
+
+  db.prepare('UPDATE partidos SET estado = ? WHERE id = ?').run(estado, partido_id);
+
+  // Si se reanuda, registrar evento de reanudación en el historial
+  if (estado === 'en_curso' && partido.estado === 'suspendido') {
+    db.prepare(`
+      INSERT INTO eventos_partido (partido_id, minuto, tipo, equipo_id, jugador_id, detalle)
+      VALUES (?, ?, 'REANUDACION', NULL, NULL, ?)
+    `).run(partido_id, minuto || 0, motivo || 'Partido reanudado');
+  }
+
+  // Si se suspende, registrar evento en el historial
+  if (estado === 'suspendido') {
+    db.prepare(`
+      INSERT INTO eventos_partido (partido_id, minuto, tipo, equipo_id, jugador_id, detalle)
+      VALUES (?, ?, 'SUSPENSION', NULL, NULL, ?)
+    `).run(partido_id, minuto || 0, motivo || 'Partido suspendido');
+  }
+
+  // Broadcast por WebSocket si está disponible
+  if (req.app.locals.broadcast) {
+    req.app.locals.broadcast({
+      tipo: 'ESTADO_PARTIDO',
+      partido_id: parseInt(partido_id),
+      estado,
+      motivo: motivo || null
+    });
+  }
+
+  res.json({ ok: true, mensaje: `Partido marcado como "${estado}"` });
 });
 
 // ─────────────────────────────────────────

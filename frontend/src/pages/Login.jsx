@@ -2,19 +2,23 @@ import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../api';
 import { useAuthStore } from '../store';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import styles from './Auth.module.css';
 
 export default function Login() {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const { login } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const mutation = useMutation({
     mutationFn: authApi.login,
     onSuccess: (data) => {
       login(data.usuario, data.token);
-      navigate('/');
+      const pathname = location.state?.from?.pathname;
+      const search = location.state?.from?.search || '';
+      const from = pathname ? pathname + search : '/';
+      navigate(from);
     },
   });
 
@@ -63,7 +67,7 @@ export default function Login() {
           </button>
 
           <p className={styles.linkText}>
-            ¿No tenés cuenta? <Link to="/registro" className={styles.link}>Registrate</Link>
+            ¿No tenés cuenta? <Link to="/registro" state={{ from: location.state?.from }} className={styles.link}>Registrate</Link>
           </p>
           <p className={styles.linkText} style={{ marginTop: '-4px' }}>
             ¿Olvidaste la contraseña? <Link to="/recuperar" className={styles.link}>Recuperala</Link>

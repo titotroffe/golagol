@@ -97,6 +97,8 @@
 .thNum   { width: 34px; text-align: center; font-size: 0.7rem; }
 .thPts   { width: 42px; color: #d29922 !important; text-align: center; font-size: 0.75rem; }
 .thDifCol { width: 42px; text-align: center; font-size: 0.7rem; }
+.thExactos { width: 65px; text-align: center; font-size: 0.7rem; }
+
 
 .tdPos {
   font-weight: 700;
@@ -208,6 +210,7 @@
   .thPts { width: 30px; font-size: 0.7rem; }
   .thPos { width: 24px; font-size: 0.7rem; }
   .thDifCol { width: 30px; }
+  .thExactos { width: 45px; font-size: 0.6rem; }
   
   .tdPts { font-size: 0.75rem; }
   .tdPos { font-size: 0.65rem; }

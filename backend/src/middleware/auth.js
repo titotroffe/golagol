@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'prode_liga_nicoleña_secret_2025';
+const { JWT_SECRET } = require('../config');
 
 function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
