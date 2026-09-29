@@ -50,7 +50,8 @@ router.get('/:id', (req, res) => {
 
   // Detalles básicos
   const jugador = db.prepare(`
-    SELECT j.*, e.nombre as equipo_nombre, e.escudo_url as equipo_escudo
+    SELECT j.*, e.nombre as equipo_nombre, e.escudo_url as equipo_escudo,
+           e.color_local as equipo_color_local, e.color_visita as equipo_color_visita
     FROM jugadores j
     JOIN equipos e ON e.id = j.equipo_id
     WHERE j.id = ?

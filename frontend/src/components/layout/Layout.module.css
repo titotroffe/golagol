@@ -253,8 +253,8 @@
 
 .tabActive {
   color: #f0f6fc;
-  border-bottom-color: var(--primary-color, #3fb950);
-  text-shadow: 0 0 10px color-mix(in srgb, var(--primary-color, #3fb950) 50%, transparent);
+  border-bottom-color: #3fb950;
+  text-shadow: 0 0 10px rgba(63, 185, 80, 0.5);
 }
 
 /* Menú Mobile Desplegable */
@@ -309,9 +309,9 @@
     background: rgba(255,255,255,0.03);
   }
   .mobileTabActive {
-    background: color-mix(in srgb, var(--primary-color, #3fb950) 12%, transparent);
-    color: var(--primary-color, #3fb950);
-    border-left: 3px solid var(--primary-color, #238636);
+    background: rgba(35, 134, 54, 0.12);
+    color: #3fb950;
+    border-left: 3px solid #238636;
   }
 }
 

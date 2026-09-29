@@ -36,14 +36,7 @@ const queryClient = new QueryClient({
 export default function App() {
   const usuario = useAuthStore((s) => s.usuario);
 
-  useEffect(() => {
-    const root = document.documentElement;
-    if (usuario && usuario.equipo_color_local) {
-      root.style.setProperty('--primary-color', usuario.equipo_color_local);
-    } else {
-      root.style.setProperty('--primary-color', '#3fb950'); // Default green
-    }
-  }, [usuario]);
+
 
   return (
     <QueryClientProvider client={queryClient}>

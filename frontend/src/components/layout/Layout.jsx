@@ -70,10 +70,7 @@ export default function Layout() {
                   onClick={() => setUserOpen((v) => !v)}
                   aria-label="Menú de usuario"
                 >
-                  <span 
-                    className={styles.userAvatar}
-                    style={usuario?.equipo_color_local ? { background: `linear-gradient(135deg, ${usuario.equipo_color_local}, ${usuario.equipo_color_visita || '#1f6feb'})` } : undefined}
-                  >
+                  <span className={styles.userAvatar}>
                     {usuario.avatar_url ? (
                       <img src={`http://localhost:3001${usuario.avatar_url}`} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                     ) : (

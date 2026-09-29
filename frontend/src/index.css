@@ -3,7 +3,8 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  width: 100vw;
+  width: 100%;
+  max-width: 100%;
   min-height: 100dvh;
   overflow-x: hidden;
   font-family: 'Outfit', system-ui, sans-serif;
@@ -23,7 +24,9 @@ body::after {
 }
 
 #root {
-  width: 100vw;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   min-height: 100dvh;
   background: transparent;
   position: relative;
@@ -100,7 +103,7 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
-/* ── SKELETON LOADERS ────────────────────────────── */
+/*  SKELETON LOADERS  */
 @keyframes shimmer {
   0%   { background-position: -600px 0; }
   100% { background-position: 600px 0; }
@@ -117,4 +120,3 @@ input[type=number] {
   animation: shimmer 1.4s ease-in-out infinite;
   border-radius: 6px;
 }
-

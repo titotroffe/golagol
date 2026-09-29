@@ -1,9 +1,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.4);
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -13,16 +11,16 @@
 
 .modal {
   width: 100%;
-  max-width: 380px;
+  max-width: 310px;
   position: relative;
   display: flex;
   flex-direction: column;
   animation: cardFade 0.3s ease-out;
 }
 
-@keyframes cardFade {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes ultimateFlip {
+  0% { opacity: 0; transform: perspective(1000px) rotateY(90deg) scale(0.8); }
+  100% { opacity: 1; transform: perspective(1000px) rotateY(0deg) scale(1); }
 }
 
 .btnClose {
@@ -31,7 +29,7 @@
   right: 0;
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.8);
   font-size: 2rem;
   cursor: pointer;
   line-height: 1;
@@ -42,23 +40,82 @@
   color: #fff;
 }
 
-/* Base Card */
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes spinBorder {
+  to {
+    --angle: 360deg;
+  }
+}
+
+/* Base Card - Glassmorphism */
 .elegantCard {
-  background: #161b22;
-  border-radius: 20px;
+  --scale: 1;
+  /* El background real se inyecta por style para tomar los colores del club, acá va un fallback */
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(40px) saturate(200%) brightness(1.2);
+  -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(1.2);
+  border-radius: 32px;
   overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   flex-direction: column;
   position: relative;
+  min-height: 480px;
+  
+  /* Animaciones y 3D */
+  transform-style: preserve-3d;
+  transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(var(--scale, 1));
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  transition: transform 0.15s ease-out, box-shadow 0.3s ease-out;
+  
+  /* Fallback inicial de entrada */
+  animation: ultimateFlip 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Header Gradient */
+.elegantCard:hover {
+  --scale: 1.05;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.8), inset 0 0 0 2px rgba(255, 255, 255, 0.4);
+}
+
+.holographicGlare {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.1) 40%,
+    transparent 70%
+  );
+  mix-blend-mode: overlay;
+  opacity: var(--active, 0);
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.elegantCard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(from var(--angle), transparent 60%, rgba(255, 255, 255, 0.8), transparent 80%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: spinBorder 3s linear infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Header Space */
 .cardHeader {
   height: 100px;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--primary-color, #1f6feb) 60%, transparent), rgba(0,0,0,0));
-  background-color: var(--primary-color, #1f6feb);
   position: relative;
   display: flex;
   justify-content: flex-end;
@@ -67,15 +124,16 @@
 
 /* Top Right Badge */
 .headerBadge {
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(4px);
-  padding: 6px 12px;
-  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  padding: 8px 14px;
+  border-radius: 12px;
   color: white;
-  font-weight: 700;
-  font-size: 0.85rem;
+  font-weight: 800;
+  font-size: 1.1rem;
   height: max-content;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 
 /* Avatar Overlapping Header */
