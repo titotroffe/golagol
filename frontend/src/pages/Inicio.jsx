@@ -4,6 +4,7 @@ import { torneosApi, jugadoresApi } from '../api';
 import { useTorneoStore, useNotificacionesStore } from '../store';
 import { Link } from 'react-router-dom';
 import { useWebSocket } from '../hooks/useWebSocket';
+import ModalJugador from '../components/ui/ModalJugador';
 import styles from './Inicio.module.css';
 
 export default function Inicio() {
@@ -11,6 +12,7 @@ export default function Inicio() {
   const { torneoActivo } = useTorneoStore();
   const suscripciones = useNotificacionesStore(s => s.suscripciones);
   const toggleNotificacion = useNotificacionesStore(s => s.toggleSuscripcion);
+  const [selectedJugadorId, setSelectedJugadorId] = useState(null);
 
   useWebSocket(() => {
     queryClient.invalidateQueries(['inicio']);
@@ -184,7 +186,12 @@ export default function Inicio() {
           <h2 className={styles.sectionTitle}>🎂 ¡Feliz Cumpleaños!</h2>
           <div className={styles.sancionadosList}>
             {cumpleaneros.map(c => (
-              <div key={c.id} className={styles.sancionadoCard} style={{ borderColor: 'rgba(210, 153, 34, 0.4)' }}>
+              <div 
+                key={c.id} 
+                className={styles.sancionadoCard} 
+                style={{ borderColor: 'rgba(210, 153, 34, 0.4)', cursor: 'pointer' }}
+                onClick={() => setSelectedJugadorId(c.id)}
+              >
                 <div className={styles.sancionadoInfo}>
                   <img src={c.escudo_url} alt="" className={styles.sancionadoEscudo} />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -210,7 +217,12 @@ export default function Inicio() {
           <h2 className={styles.sectionTitle}>Bajas por Sanción</h2>
           <div className={styles.sancionadosList}>
             {sancionados.map(s => (
-              <div key={s.id} className={styles.sancionadoCard}>
+              <div 
+                key={s.id} 
+                className={styles.sancionadoCard}
+                style={{ cursor: 'pointer' }}
+                onClick={() => setSelectedJugadorId(s.jugador_id)}
+              >
                 <div className={styles.sancionadoInfo}>
                   <img src={s.equipo_escudo} alt="" className={styles.sancionadoEscudo} />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -231,6 +243,13 @@ export default function Inicio() {
             ))}
           </div>
         </section>
+      )}
+
+      {selectedJugadorId && (
+        <ModalJugador 
+          jugadorId={selectedJugadorId} 
+          onClose={() => setSelectedJugadorId(null)} 
+        />
       )}
     </div>
   );

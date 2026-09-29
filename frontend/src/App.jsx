@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useAuthStore } from './store';
 
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/ui/ProtectedRoute';
@@ -32,6 +34,17 @@ const queryClient = new QueryClient({
 });
 
 export default function App() {
+  const usuario = useAuthStore((s) => s.usuario);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (usuario && usuario.equipo_color_local) {
+      root.style.setProperty('--primary-color', usuario.equipo_color_local);
+    } else {
+      root.style.setProperty('--primary-color', '#3fb950'); // Default green
+    }
+  }, [usuario]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>

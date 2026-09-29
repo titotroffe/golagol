@@ -66,7 +66,13 @@ router.post('/login', loginLimiter, (req, res) => {
     return res.status(400).json({ error: 'Usuario y contraseña son requeridos' });
   }
 
-  const user = db.prepare('SELECT * FROM usuarios WHERE usuario = ? AND activo = 1').get(usuario);
+  const user = db.prepare(`
+    SELECT u.*, e.nombre as equipo_nombre, e.escudo_url as equipo_escudo, 
+           e.color_local as equipo_color_local, e.color_visita as equipo_color_visita
+    FROM usuarios u
+    LEFT JOIN equipos e ON u.equipo_id = e.id
+    WHERE u.usuario = ? AND u.activo = 1
+  `).get(usuario);
 
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
@@ -88,6 +94,10 @@ router.post('/login', loginLimiter, (req, res) => {
       email: user.email,
       rol: user.rol,
       equipo_id: user.equipo_id,
+      equipo_nombre: user.equipo_nombre,
+      equipo_escudo: user.equipo_escudo,
+      equipo_color_local: user.equipo_color_local,
+      equipo_color_visita: user.equipo_color_visita,
       avatar_url: user.avatar_url
     }
   });

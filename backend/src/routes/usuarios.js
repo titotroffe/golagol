@@ -40,7 +40,8 @@ router.get('/perfil', authMiddleware, (req, res) => {
   const userId = req.usuario.id;
   const user = db.prepare(`
     SELECT u.id, u.nombre, u.apellido, u.email, u.usuario, u.fecha_nacimiento, u.rol, u.avatar_url, 
-           e.id as equipo_id, e.nombre as equipo_nombre, e.escudo_url as equipo_escudo
+           e.id as equipo_id, e.nombre as equipo_nombre, e.escudo_url as equipo_escudo,
+           e.color_local as equipo_color_local, e.color_visita as equipo_color_visita
     FROM usuarios u
     LEFT JOIN equipos e ON u.equipo_id = e.id
     WHERE u.id = ?

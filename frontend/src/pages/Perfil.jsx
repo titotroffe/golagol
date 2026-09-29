@@ -54,9 +54,15 @@ export default function Perfil() {
       setError(null);
       queryClient.invalidateQueries(['perfil']);
       // Actualizar el estado global con los nuevos nombres
+      const equipoSeleccionado = equipos.find(e => e.id === parseInt(form.equipo_id));
       updateAuthUser({
         nombre: form.nombre,
         apellido: form.apellido,
+        equipo_id: form.equipo_id,
+        equipo_nombre: equipoSeleccionado?.nombre || null,
+        equipo_escudo: equipoSeleccionado?.escudo_url || null,
+        equipo_color_local: equipoSeleccionado?.color_local || null,
+        equipo_color_visita: equipoSeleccionado?.color_visita || null
       });
       setTimeout(() => setMensaje(null), 3000);
     },

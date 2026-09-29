@@ -1,0 +1,229 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal {
+  width: 100%;
+  max-width: 380px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  animation: cardFade 0.3s ease-out;
+}
+
+@keyframes cardFade {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.btnClose {
+  position: absolute;
+  top: -45px;
+  right: 0;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 2rem;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.btnClose:hover {
+  color: #fff;
+}
+
+/* Base Card */
+.elegantCard {
+  background: #161b22;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Header Gradient */
+.cardHeader {
+  height: 100px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary-color, #1f6feb) 60%, transparent), rgba(0,0,0,0));
+  background-color: var(--primary-color, #1f6feb);
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px;
+}
+
+/* Top Right Badge */
+.headerBadge {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  padding: 6px 12px;
+  border-radius: 20px;
+  color: white;
+  font-weight: 700;
+  font-size: 0.85rem;
+  height: max-content;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Avatar Overlapping Header */
+.avatarWrapper {
+  position: absolute;
+  bottom: -40px;
+  left: 32px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.avatarCircle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #21262d;
+  border: 4px solid #161b22;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  color: white;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.escudoBadge {
+  position: absolute;
+  bottom: 0;
+  right: -5px;
+  width: 32px;
+  height: 32px;
+  background: #161b22;
+  border-radius: 50%;
+  padding: 4px;
+  object-fit: contain;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+}
+
+/* Body Content */
+.cardBody {
+  padding: 50px 32px 32px 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.playerName {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #f0f6fc;
+  line-height: 1.2;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.5px;
+}
+
+.playerDetails {
+  font-size: 0.9rem;
+  color: #8b949e;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #30363d;
+}
+
+/* Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.statValue {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #f0f6fc;
+}
+
+.statLabel {
+  font-size: 0.7rem;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+/* Sanciones */
+.sancionesWrapper {
+  margin-top: 16px;
+  background: rgba(218, 54, 51, 0.1);
+  border: 1px solid rgba(218, 54, 51, 0.2);
+  border-left: 4px solid #da3633;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.sancionesTitle {
+  font-size: 0.85rem;
+  color: #da3633;
+  margin: 0 0 4px 0;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.sancionItem {
+  font-size: 0.85rem;
+  color: #f0f6fc;
+}
+
+.motivo {
+  font-size: 0.8rem;
+  color: #8b949e;
+  margin-top: 2px;
+  font-style: italic;
+}
+
+.msg, .error {
+  text-align: center;
+  padding: 40px 0;
+  color: #8b949e;
+  background: #161b22;
+  border-radius: 20px;
+  width: 100%;
+}
+.error {
+  color: #f85149;
+}

@@ -6,6 +6,7 @@ import { partidosApi, equiposApi } from '../api';
 import { useAuthStore, useToastStore } from '../store';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { motion, AnimatePresence } from 'framer-motion';
+import ModalJugador from '../components/ui/ModalJugador';
 import styles from './GolAGol.module.css';
 
 function EquipoPanel({
@@ -358,6 +359,7 @@ export default function GolAGol() {
   const currentUser = useAuthStore(s => s.usuario);
   const isAdmin = currentUser?.rol === 'admin';
   const [activeChatTooltip, setActiveChatTooltip] = useState({ id: null, x: 0, y: 0, text: '' });
+  const [selectedJugadorId, setSelectedJugadorId] = useState(null);
 
   useEffect(() => {
     if (activeChatTooltip.id) {
@@ -745,7 +747,10 @@ export default function GolAGol() {
                           )}
                         </div>
                         <div className={styles.evDetails}>
-                          <strong>
+                          <strong 
+                            onClick={() => ev.jugador_id && setSelectedJugadorId(ev.jugador_id)}
+                            style={{ cursor: ev.jugador_id ? 'pointer' : 'default', textDecoration: ev.jugador_id ? 'underline' : 'none', textDecorationColor: 'rgba(255,255,255,0.3)' }}
+                          >
                             {(() => {
                               const nombreCompleto = ev.jugador_nombre && ev.jugador_apellido ? `${ev.jugador_nombre} ${ev.jugador_apellido}` : (ev.jugador_nombre || ev.jugador_apellido || '');
                               if (ev.tipo === 'CAMBIO') return `Salió ${nombreCompleto}`;
@@ -1079,6 +1084,14 @@ export default function GolAGol() {
           )}
         </AnimatePresence>,
         document.body
+      )}
+
+      {selectedJugadorId && (
+        <ModalJugador 
+          jugadorId={selectedJugadorId} 
+          dorsal={alineaciones.find(a => a.jugador_id === selectedJugadorId)?.dorsal}
+          onClose={() => setSelectedJugadorId(null)} 
+        />
       )}
 
     </div>
