@@ -70,18 +70,15 @@ function PartidoProde({ partido }) {
 
   return (
     <div className={cardClass}>
-      <div className={styles.mainRow}>
+      <div className={styles.equiposContainer}>
         {/* Equipo Local */}
-        <div className={`${styles.equipo} ${styles.equipoLocal}`}>
+        <div className={styles.equipo}>
+          {partido.local_escudo && <img src={partido.local_escudo} alt="" className={styles.escudo} />}
           <span className={styles.equipoNombre}>{partido.local_nombre}</span>
-          {partido.local_escudo 
-            ? <img src={partido.local_escudo} alt="" className={styles.escudo} />
-            : <span className={styles.escudoVacio} />
-          }
         </div>
 
         {/* Cajas de input */}
-        <div className={styles.marcadorCol} style={{ gap: 0 }}>
+        <div className={styles.marcadorWrapper}>
           <div className={styles.inputGroup}>
             <input
               type="number"
@@ -108,17 +105,14 @@ function PartidoProde({ partido }) {
         </div>
 
         {/* Equipo Visita */}
-        <div className={`${styles.equipo} ${styles.equipoVisita}`}>
-          {partido.visita_escudo 
-            ? <img src={partido.visita_escudo} alt="" className={styles.escudo} />
-            : <span className={styles.escudoVacio} />
-          }
+        <div className={styles.equipo}>
+          {partido.visita_escudo && <img src={partido.visita_escudo} alt="" className={styles.escudo} />}
           <span className={styles.equipoNombre}>{partido.visita_nombre}</span>
         </div>
       </div>
 
       {/* Acciones y resultados extra */}
-      <div className={styles.extrasRow}>
+      <div className={styles.partidoFooter}>
         {!isLocked && (localStr !== '' && visitaStr !== '') && (localStr !== pronostico?.goles_local?.toString() || visitaStr !== pronostico?.goles_visita?.toString()) && (
           <button 
             className={styles.btnSave} 
@@ -130,21 +124,21 @@ function PartidoProde({ partido }) {
         )}
 
         {isTooLate && !isClosed && (
-          <div style={{ color: '#8b949e', fontSize: '0.85rem', fontWeight: 600 }}>
-            Prode cerrado (arranca pronto)
-          </div>
+          <span style={{ color: '#8b949e', fontSize: '0.85rem', fontWeight: 600 }}>
+            Cerrado (arranca pronto)
+          </span>
         )}
 
         {isClosed && (
-          <div className={styles.resultadoReal}>
+          <span className={styles.resultadoReal}>
             Real: {partido.goles_local} - {partido.goles_visita}
-          </div>
+          </span>
         )}
         
         {isClosed && pronostico?.puntos_obtenidos != null && (
-          <div className={styles.puntosObtenidos}>
+          <span className={styles.puntosObtenidos}>
             +{pronostico.puntos_obtenidos} pts
-          </div>
+          </span>
         )}
       </div>
     </div>
@@ -486,11 +480,11 @@ export default function Prode() {
           </div>
 
           <div className={styles.leyenda}>
-            <span className={styles.badgeExacto}>+6 Pleno</span>
+            <span className={styles.badgeExacto}>+6 Exacto</span>
             <span className={styles.badgeSigno}>+3 Resultado</span>
           </div>
 
-          <div className={styles.partidosList}>
+          <div className={styles.partidosGrid}>
             {loadingPartidos && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {[...Array(4)].map((_, i) => (

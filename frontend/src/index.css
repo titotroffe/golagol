@@ -4,7 +4,7 @@
 
 html, body {
   width: 100vw;
-  min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   font-family: 'Outfit', system-ui, sans-serif;
   background-color: #050810;
@@ -24,7 +24,7 @@ body::after {
 
 #root {
   width: 100vw;
-  min-height: 100vh;
+  min-height: 100dvh;
   background: transparent;
   position: relative;
   z-index: 1;

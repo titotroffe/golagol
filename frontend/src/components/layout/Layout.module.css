@@ -4,7 +4,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 .app {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: transparent;
   color: #f0f6fc;
   font-family: inherit;

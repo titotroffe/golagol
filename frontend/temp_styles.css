@@ -1,66 +1,4 @@
-.wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.secHead {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.secTitle {
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: -0.3px;
-  color: #c9d1d9;
-}
-
-/* ─────────────────────────────
-   SELECTOR DE FECHAS (SCROLL)
-───────────────────────────── */
-.fechasScroll {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 8px; /* space for scrollbar */
-}
-
-.fechasScroll::-webkit-scrollbar { height: 4px; }
-.fechasScroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-
-.fechasTrack {
-  display: inline-flex;
-  gap: 8px;
-  padding: 0 4px;
-}
-
-.fechaPill {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #8b949e;
-  padding: 6px 14px;
-  border-radius: 16px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.fechaPill:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #c9d1d9;
-}
-
-.fechaActive {
-  background: rgba(35, 134, 54, 0.15) !important;
-  border-color: rgba(35, 134, 54, 0.4) !important;
-  color: #3fb950 !important;
-}
-
-.partidosGrid {
+﻿.partidosGrid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
@@ -87,6 +25,24 @@
 .partidoCard:hover {
   border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
+}
+
+.liveCard {
+  border-color: rgba(63, 185, 80, 0.3);
+  background: linear-gradient(to bottom, #161b22, rgba(63, 185, 80, 0.03));
+}
+
+.fechaBadge {
+  position: absolute;
+  top: -12px;
+  left: 20px;
+  background: #21262d;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #8b949e;
 }
 
 .equiposContainer {
@@ -192,40 +148,21 @@
   gap: 6px;
 }
 
-.enVivoBadge {
-  background: #f85149;
-  color: white;
-  font-size: 0.6rem;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  animation: pulse 2s infinite;
-}
-
-.finBadge {
-  background: rgba(255,255,255,0.1);
-  color: #8b949e;
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  text-transform: uppercase;
-}
-
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.6; }
-  100% { opacity: 1; }
-}
-
-.msg {
-  color: #8b949e;
+.btnVer {
+  display: block;
   text-align: center;
-  padding: 24px 0;
-  font-size: 0.9rem;
+  background: rgba(63, 185, 80, 0.1);
+  color: #7ee787;
+  border: 1px solid rgba(63, 185, 80, 0.3);
+  padding: 8px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  margin-top: auto;
 }
 
-@media (max-width: 600px) {
-  /* Empty for now as the grid mostly takes care of mobile styling via auto-fit */
-}
+.btnVer:hover {
+  background: rgba(63, 185, 80, 0.2);
+  color: #fff;

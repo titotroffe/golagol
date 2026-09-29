@@ -687,16 +687,22 @@ export default function GolAGol() {
               <div className={styles.feedScroll}>
                 {(() => {
                   if (!partido.eventos) return null;
-                  const inicio2T = partido.eventos.find(e => e.tipo === 'INICIO_2T');
-                  const splitId = inicio2T ? inicio2T.id : Infinity;
+                  const inicios2T = partido.eventos.filter(e => e.tipo === 'INICIO_2T');
+                  const splitIdNum = inicios2T.length > 0 ? Math.min(...inicios2T.map(e => Number(e.id))) : Infinity;
+
+                  const getTiempo = (ev) => {
+                    if (['INICIO_PARTIDO', 'FIN_1T'].includes(ev.tipo)) return 1;
+                    if (['INICIO_2T', 'FIN_PARTIDO'].includes(ev.tipo)) return 2;
+                    return Number(ev.id) >= splitIdNum ? 2 : 1;
+                  };
 
                   const eventosOrdenados = [...partido.eventos].sort((a, b) => {
-                    const tiempoA = a.id >= splitId ? 2 : 1;
-                    const tiempoB = b.id >= splitId ? 2 : 1;
+                    const tiempoA = getTiempo(a);
+                    const tiempoB = getTiempo(b);
                     
                     if (tiempoA !== tiempoB) return tiempoB - tiempoA; // DESC (2T > 1T)
                     if (a.minuto !== b.minuto) return (b.minuto || 0) - (a.minuto || 0); // DESC
-                    return b.id - a.id; // DESC
+                    return Number(b.id) - Number(a.id); // DESC
                   });
 
                   return eventosOrdenados.map(ev => {
