@@ -5,6 +5,7 @@ import { useTorneoStore } from "../store";
 import styles from "./Tabla.module.css";
 import est from "./Estadisticas.module.css";
 import prodeStyles from "./Prode.module.css";
+import fixStyles from "./Fixture.module.css";
 
 export default function Simular() {
   const torneoActivo = useTorneoStore((s) => s.torneoActivo);
@@ -12,7 +13,7 @@ export default function Simular() {
   const [overrides, setOverrides] = useState({});
   const [tablaSimulada, setTablaSimulada] = useState(null);
 
-  const { data: fechas } = useQuery({
+  const { data: fechas, isLoading: loadingFechas } = useQuery({
     queryKey: ["fechas", torneoActivo?.id],
     queryFn: () => torneosApi.fechas(torneoActivo.id),
     enabled: !!torneoActivo,
@@ -26,7 +27,7 @@ export default function Simular() {
   }, [fechas, selectedFecha]);
 
   const { data: partidos, isLoading: loadingPartidos } = useQuery({
-    queryKey: ["partidos-simular", selectedFecha?.id],
+    queryKey: ["partidos", selectedFecha?.id],
     queryFn: () => partidosApi.porFecha(selectedFecha.id),
     enabled: !!selectedFecha,
   });
@@ -65,14 +66,15 @@ export default function Simular() {
 
   const resetear = () => { setOverrides({}); setTablaSimulada(null); };
 
-  if (!torneoActivo) return <p className={styles.msg}>Selecciona un torneo</p>;
+  if (!torneoActivo) return <p className={prodeStyles.msg}>Seleccioná un torneo</p>;
+  if (loadingFechas) return <p className={prodeStyles.msg}>Cargando fechas...</p>;
 
   return (
     <div className={prodeStyles.wrap}>
-      <section className={prodeStyles.section}>
+      <section className={prodeStyles.wrap}>
 
-
-        <div className={prodeStyles.fechasScroll} style={{ marginTop: '10px' }}>
+        {/* Selector de Fechas (Pills horizontales) */}
+        <div className={prodeStyles.fechasScroll}>
           <div className={prodeStyles.fechasTrack}>
             {fechas?.map(f => (
               <button
@@ -86,70 +88,89 @@ export default function Simular() {
           </div>
         </div>
 
-        <p className={prodeStyles.msg} style={{ marginTop: '0px', textAlign: 'left', fontSize: '0.9rem', color: '#8b949e' }}>
-          Podes cambiar resultados pasados o futuros. Completa los que quieras y presiona Simular.
+        <p className={prodeStyles.secSub} style={{ margin: 0 }}>
+          Podés cambiar resultados pasados o futuros. Completá los que quieras y presioná Simular.
         </p>
 
-        {loadingPartidos && <p className={styles.msg}>Cargando partidos...</p>}
+        {/* Lista de partidos de la fecha */}
+        <div className={prodeStyles.partidosGrid}>
+          {loadingPartidos && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="skeleton" style={{ height: '88px', borderRadius: '12px' }} />
+              ))}
+            </div>
+          )}
 
-        {!loadingPartidos && (!partidos || partidos.length === 0) && (
-          <p className={styles.msg}>No hay partidos para esta fecha.</p>
-        )}
+          {!loadingPartidos && partidos?.length === 0 && (
+            <p className={prodeStyles.msg}>No hay partidos cargados en esta fecha.</p>
+          )}
 
-        {!loadingPartidos && partidos && partidos.length > 0 && (
-          <div className={prodeStyles.partidosList}>
-            {partidos.map(p => {
-              const valLocal = overrides[p.id]?.local !== undefined ? overrides[p.id].local : (p.estado === 'finalizado' ? p.goles_local : "");
-              const valVisita = overrides[p.id]?.visita !== undefined ? overrides[p.id].visita : (p.estado === 'finalizado' ? p.goles_visita : "");
-              return (
-                <div key={p.id} className={prodeStyles.partidoCard}>
-                  <div className={prodeStyles.mainRow}>
-                    {/* Equipo Local */}
-                    <div className={`${prodeStyles.equipo} ${prodeStyles.equipoLocal}`}>
-                      <span className={prodeStyles.equipoNombre}>{p.local_nombre}</span>
-                      {p.local_escudo
-                        ? <img src={p.local_escudo} alt="" className={prodeStyles.escudo} />
-                        : <span className={prodeStyles.escudoVacio} />
-                      }
-                    </div>
+          {!loadingPartidos && partidos?.map(p => {
+            const valLocal = overrides[p.id]?.local !== undefined ? overrides[p.id].local : (p.estado === 'finalizado' ? p.goles_local : "");
+            const valVisita = overrides[p.id]?.visita !== undefined ? overrides[p.id].visita : (p.estado === 'finalizado' ? p.goles_visita : "");
+            const modificado = overrides[p.id] !== undefined;
 
-                    {/* Marcador Central / Inputs */}
-                    <div className={prodeStyles.marcadorCol} style={{ gap: 0 }}>
-                      <div className={prodeStyles.inputGroup}>
-                        <input
-                          type="number"
-                          min="0" max="99"
-                          className={prodeStyles.inputGol}
-                          value={valLocal}
-                          onChange={e => handleChange(p, "local", e.target.value)}
-                          placeholder="-"
-                        />
-                        <span className={prodeStyles.golSep}>-</span>
-                        <input
-                          type="number"
-                          min="0" max="99"
-                          className={prodeStyles.inputGol}
-                          value={valVisita}
-                          onChange={e => handleChange(p, "visita", e.target.value)}
-                          placeholder="-"
-                        />
-                      </div>
-                    </div>
+            const date = p.fecha_hora ? new Date(p.fecha_hora) : null;
+            const dia = date ? date.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: 'short' }) : 'Pronto';
+            const hora = date ? date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : 'A def.';
 
-                    {/* Equipo Visita */}
-                    <div className={`${prodeStyles.equipo} ${prodeStyles.equipoVisita}`}>
-                      {p.visita_escudo
-                        ? <img src={p.visita_escudo} alt="" className={prodeStyles.escudo} />
-                        : <span className={prodeStyles.escudoVacio} />
-                      }
-                      <span className={prodeStyles.equipoNombre}>{p.visita_nombre}</span>
+            return (
+              <div key={p.id} className={prodeStyles.partidoCard}>
+                <div className={prodeStyles.equiposContainer}>
+                  {/* Equipo Local */}
+                  <div className={prodeStyles.equipo}>
+                    {p.local_escudo && <img src={p.local_escudo} alt="" className={prodeStyles.escudo} />}
+                    <span className={prodeStyles.equipoNombre}>{p.local_nombre}</span>
+                  </div>
+
+                  {/* Cajas de input */}
+                  <div className={prodeStyles.marcadorWrapper}>
+                    <div className={prodeStyles.inputGroup}>
+                      <input
+                        type="number"
+                        className={prodeStyles.inputGol}
+                        value={valLocal}
+                        onChange={e => handleChange(p, "local", e.target.value)}
+                        placeholder="-"
+                        min="0"
+                        max="99"
+                      />
+                      <span className={prodeStyles.golSep}>-</span>
+                      <input
+                        type="number"
+                        className={prodeStyles.inputGol}
+                        value={valVisita}
+                        onChange={e => handleChange(p, "visita", e.target.value)}
+                        placeholder="-"
+                        min="0"
+                        max="99"
+                      />
                     </div>
                   </div>
+
+                  {/* Equipo Visita */}
+                  <div className={prodeStyles.equipo}>
+                    {p.visita_escudo && <img src={p.visita_escudo} alt="" className={prodeStyles.escudo} />}
+                    <span className={prodeStyles.equipoNombre}>{p.visita_nombre}</span>
+                  </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+
+                {/* Extras Row */}
+                <div className={prodeStyles.partidoFooter}>
+                  {p.estado === 'en_curso' && <span className={fixStyles.enVivoBadge}>En vivo</span>}
+                  {p.estado === 'finalizado' && (
+                    <span className={prodeStyles.resultadoReal}>
+                      Real: {p.goles_local} - {p.goles_visita}
+                    </span>
+                  )}
+                  {p.estado === 'pendiente' && <span>{dia} · {hora}</span>}
+                  {modificado && <span className={fixStyles.finBadge} style={{ color: '#58a6ff' }}>Simulado</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
         <div className={est.btnRow} style={{ marginTop: '16px' }}>
           <button
